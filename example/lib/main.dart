@@ -8,8 +8,8 @@
 /// video.
 
 import 'package:flutter/material.dart';
-import 'package:video_player/video_player.dart';
 import 'package:fvp/fvp.dart' as fvp;
+import 'package:video_player/video_player.dart';
 
 void main() {
   fvp.registerWith();
