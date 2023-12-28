@@ -21,7 +21,6 @@ dependencies:
     path: ../
   cupertino_icons: ^1.0.2
   logging: ^1.2.0
-  video_player: ^2.8.1
 
 
 dependency_overrides:

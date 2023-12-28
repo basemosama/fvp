@@ -6,8 +6,10 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/widgets.dart'; //
 import 'package:flutter/services.dart';
+import 'package:fvp/mdk.dart';
+import 'package:fvp/src/video_player_options.dart';
 import 'package:path/path.dart' as path;
-import 'package:video_player_platform_interface/video_player_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:logging/logging.dart';
 import 'extensions.dart';
 
@@ -45,8 +47,8 @@ class MdkVideoPlayer extends mdk.Player {
             duration: Duration(
                 milliseconds: info.duration == 0
                     ? double.maxFinite.toInt()
-                    : info
-                        .duration) // FIXME: live stream info.duraiton == 0 and result a seekTo(0) in play()
+                    : info.duration)
+            // FIXME: live stream info.duraiton == 0 and result a seekTo(0) in play()
             ,
             size: size));
       } else if (!oldValue.test(mdk.MediaStatus.buffering) &&
@@ -87,8 +89,33 @@ class MdkVideoPlayer extends mdk.Player {
     });
   }
 }
+class _PlaceholderImplementation extends MdkVideoPlayerPlatform {}
 
-class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
+class MdkVideoPlayerPlatform extends PlatformInterface {
+
+  /// Constructs a VideoPlayerPlatform.
+  MdkVideoPlayerPlatform() : super(token: _token);
+
+  static final Object _token = Object();
+
+  static MdkVideoPlayerPlatform _instance = _PlaceholderImplementation();
+
+  /// The instance of [MdkVideoPlayerPlatform] to use.
+  ///
+  /// Defaults to a placeholder that does not override any methods, and thus
+  /// throws `UnimplementedError` in most cases.
+  static MdkVideoPlayerPlatform get instance => _instance;
+
+  /// Platform-specific plugins should override this with their own
+  /// platform-specific class that extends [VideoPlayerPlatform] when they
+  /// register themselves.
+  static set instance(MdkVideoPlayerPlatform instance) {
+    PlatformInterface.verify(instance, _token);
+    _instance = instance;
+  }
+
+
+
   static final _players = <int, MdkVideoPlayer>{};
   static Map<String, Object>? _globalOpts;
   static Map<String, String>? _playerOpts;
@@ -145,7 +172,7 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
       mdk.setGlobalOption(key, value);
     });
 
-    VideoPlayerPlatform.instance = MdkVideoPlayerPlatform();
+    MdkVideoPlayerPlatform.instance = MdkVideoPlayerPlatform();
 
     mdk.setLogHandler((level, msg) {
       if (msg.endsWith('\n')) {
@@ -170,15 +197,12 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     // mdk.setGlobalOptions('plugins', 'mdk-braw');
   }
 
-  @override
   Future<void> init() async {}
 
-  @override
   Future<void> dispose(int textureId) async {
     _players.remove(textureId)?.dispose();
   }
 
-  @override
   Future<int?> create(DataSource dataSource) async {
     String? uri;
     switch (dataSource.sourceType) {
@@ -245,7 +269,6 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     return tex;
   }
 
-  @override
   Future<void> setLooping(int textureId, bool looping) async {
     final player = _players[textureId];
     if (player != null) {
@@ -253,33 +276,170 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     }
   }
 
-  @override
   Future<void> play(int textureId) async {
     _players[textureId]?.state = mdk.PlaybackState.playing;
   }
 
-  @override
   Future<void> pause(int textureId) async {
     _players[textureId]?.state = mdk.PlaybackState.paused;
   }
 
-  @override
   Future<void> setVolume(int textureId, double volume) async {
     _players[textureId]?.volume = volume;
   }
 
-  @override
   Future<void> setPlaybackSpeed(int textureId, double speed) async {
     _players[textureId]?.playbackRate = speed;
   }
 
-  @override
   Future<void> seekTo(int textureId, Duration position) async {
     _players[textureId]?.seek(
         position: position.inMilliseconds, flags: mdk.SeekFlag(_seekFlags));
   }
 
-  @override
+  /// Gets the video [MdkTrackSelection]s. For convenience if the video file has at
+  /// least one [MdkTrackSelection] for a specific type, the auto track selection will
+  /// be added to this list with that type.
+  Future<List<VideoStreamInfo>> getVideoTracks(
+    int textureId, ) async {
+   final player = _players[textureId];
+   final videoTracks = player?.mediaInfo.video ??[];
+   return videoTracks;
+  }
+
+
+  Future<List<AudioStreamInfo>> getAudioTracks(
+    int textureId,) async {
+   final player = _players[textureId];
+   final audioTracks = player?.mediaInfo.audio ??[];
+   return audioTracks;
+  }
+
+
+  Future<List<SubtitleStreamInfo>> getSubtitleTracks(
+    int textureId,) async {
+   final player = _players[textureId];
+   final subtitleTracks = player?.mediaInfo.subtitle ??[];
+
+   return subtitleTracks;
+  }
+
+
+  /// Sets the selected video track selection.
+  void setVideoTrack(
+      int textureId,
+      int trackId
+      ){
+    final player=_players[textureId];
+    player?.setActiveTracks(MediaType.video, [trackId]);
+  }
+
+  /// Sets the selected audio track selection.
+  void setAudioTrack(
+      int textureId,
+      int trackId
+      ){
+    final player=_players[textureId];
+    player?.setActiveTracks(MediaType.audio, [trackId]);
+  }
+
+
+  void updateDataSource(int textureId, DataSource dataSource) {
+    String? uri;
+    switch (dataSource.sourceType) {
+      case DataSourceType.asset:
+        uri = _assetUri(dataSource.asset!, dataSource.package);
+        break;
+      case DataSourceType.network:
+        uri = dataSource.uri;
+        break;
+      case DataSourceType.file:
+        uri = Uri.decodeComponent(dataSource.uri!);
+        break;
+      case DataSourceType.contentUri:
+        uri = dataSource.uri;
+        break;
+    }
+    final player = _players[textureId];
+    if (player != null) {
+      player.media = uri!;
+      player.prepare();
+    }
+  }
+
+
+  Future<List<MdkTrackSelection>> getTrackSelections(int textureId) async {
+    final videoTracks = await getVideoTracks(textureId);
+    final audioTracks =await getAudioTracks(textureId);
+    final subtitleTracks =await getSubtitleTracks(textureId);
+
+    final player = _players[textureId];
+    final activeVideoTrack = player?.activeVideoTracks.firstOrNull;
+    final activeAudioTrack = player?.activeAudioTracks.firstOrNull;
+    final activeSubtitleTrack = player?.activeSubtitleTracks.firstOrNull;
+
+    final videoTrackSelection = videoTracks.map((e) => MdkTrackSelection(
+      trackId: e.index,
+      trackName: e.metadata['title']??'',
+      trackType: TrackSelectionType.video,
+      isSelected: e.index == activeVideoTrack,
+      size: Size(e.codec.width.toDouble(), (e.codec.height.toDouble() / e.codec.par).roundToDouble()),
+      label: e.metadata['label']??'',
+      language: e.metadata['language']??'',
+    ));
+
+    final audioTrackSelection = audioTracks.map((e) => MdkTrackSelection(
+      trackId: e.index,
+      trackName: e.metadata['title']??'',
+      trackType: TrackSelectionType.audio,
+      isSelected: e.index == activeAudioTrack,
+      size: null,
+      label: e.metadata['label']??'',
+      language: e.metadata['language']??'',
+    ));
+
+    final subtitleTrackSelection = subtitleTracks.map((e) => MdkTrackSelection(
+      trackId: e.index,
+      trackName: e.metadata['title']??'',
+      trackType: TrackSelectionType.subtitle,
+      isSelected: e.index == activeSubtitleTrack,
+      size: null,
+      label: e.metadata['label']??'',
+      language: e.metadata['language']??'',
+    ));
+
+    return [...videoTrackSelection,...audioTrackSelection,...subtitleTrackSelection];
+
+  }
+
+  /// Sets the selected track selection.
+  void setTrackSelection(int textureId, MdkTrackSelection trackSelection) {
+    final player=_players[textureId];
+    switch (trackSelection.trackType) {
+      case TrackSelectionType.video:
+        player?.setActiveTracks(MediaType.video, [trackSelection.trackId]);
+        break;
+      case TrackSelectionType.audio:
+        player?.setActiveTracks(MediaType.audio, [trackSelection.trackId]);
+        break;
+      case TrackSelectionType.subtitle:
+        player?.setActiveTracks(MediaType.subtitle, [trackSelection.trackId]);
+        break;
+    }
+
+  }
+
+
+  ///Sets the subtitle track selection.
+  void setSubtitleTrack(
+      int textureId,
+      int trackId
+      ){
+    final player=_players[textureId];
+    player?.setActiveTracks(MediaType.subtitle, [trackId]);
+  }
+
+
   Future<Duration> getPosition(int textureId) async {
     final player = _players[textureId];
     if (player == null) {
@@ -296,7 +456,6 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     return Duration(milliseconds: pos);
   }
 
-  @override
   Stream<VideoEvent> videoEventsFor(int textureId) {
     final player = _players[textureId];
     if (player != null) {
@@ -305,12 +464,10 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     throw Exception('No Stream<VideoEvent> for textureId: $textureId.');
   }
 
-  @override
   Widget buildView(int textureId) {
     return Texture(textureId: textureId);
   }
 
-  @override
   Future<void> setMixWithOthers(bool mixWithOthers) async {}
 
   static String _assetUri(String asset, String? package) {
@@ -333,4 +490,6 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     }
     return asset;
   }
+
+
 }

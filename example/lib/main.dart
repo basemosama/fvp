@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:fvp/fvp.dart' as fvp;
-import 'package:video_player/video_player.dart';
+import 'package:fvp/mdk.dart';
 
 void main() {
   fvp.registerWith();
@@ -151,12 +151,12 @@ class _ButterFlyAssetVideo extends StatefulWidget {
 }
 
 class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
-  late VideoPlayerController _controller;
+  late MdkVideoPlayerController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(
+    _controller = MdkVideoPlayerController.network(
         'https://cdn.theoplayer.com/video/big_buck_bunny/stream-3-3000000/index.m3u8');
 
     _controller.addListener(() {
@@ -208,7 +208,7 @@ class _BumbleBeeRemoteVideo extends StatefulWidget {
 }
 
 class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
-  late VideoPlayerController _controller;
+  late MdkVideoPlayerController _controller;
 
   Future<ClosedCaptionFile> _loadCaptions() async {
     final String fileContents = await DefaultAssetBundle.of(context)
@@ -220,7 +220,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(
+    _controller = MdkVideoPlayerController.network(
       'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
       closedCaptionFile: _loadCaptions(),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
@@ -292,7 +292,7 @@ class _ControlsOverlay extends StatelessWidget {
     10.0,
   ];
 
-  final VideoPlayerController controller;
+  final MdkVideoPlayerController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -389,7 +389,7 @@ class _PlayerVideoAndPopPage extends StatefulWidget {
 }
 
 class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
-  late VideoPlayerController _videoPlayerController;
+  late MdkVideoPlayerController _videoPlayerController;
   bool startedPlaying = false;
 
   void _onVideoControllerValueUpdated() {
@@ -404,7 +404,7 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
   void initState() {
     super.initState();
 
-    _videoPlayerController = VideoPlayerController.network(
+    _videoPlayerController = MdkVideoPlayerController.network(
         'https://ks3-cn-beijing.ksyun.com/ksplayer/h265/mp4_resource/jinjie_265.mp4');
     _videoPlayerController.addListener(_onVideoControllerValueUpdated);
   }
