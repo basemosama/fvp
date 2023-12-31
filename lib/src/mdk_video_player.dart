@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,11 +14,13 @@ import 'package:fvp/src/video_player_mdk.dart';
 import 'package:fvp/src/video_player_options.dart';
 import 'package:meta/meta.dart';
 
+import '../mdk.dart';
 
 MdkVideoPlayerPlatform? _lastVideoPlayerPlatform;
 
 MdkVideoPlayerPlatform get _videoPlayerPlatform {
-  final MdkVideoPlayerPlatform currentInstance = MdkVideoPlayerPlatform.instance;
+  final MdkVideoPlayerPlatform currentInstance =
+      MdkVideoPlayerPlatform.instance;
   if (_lastVideoPlayerPlatform != currentInstance) {
     // This will clear all open videos on the platform when a full restart is
     // performed.
@@ -33,7 +36,7 @@ MdkVideoPlayerPlatform get _videoPlayerPlatform {
 class MdkVideoPlayerValue {
   /// Constructs a video with the given values. Only [duration] is required. The
   /// rest will initialize with default values when unset.
-  const MdkVideoPlayerValue(  {
+  const MdkVideoPlayerValue({
     required this.duration,
     this.size = Size.zero,
     this.position = Duration.zero,
@@ -650,22 +653,6 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
     _updatePosition(position);
   }
 
-  /// The track selections in the current video.
-  Future<List<MdkTrackSelection>?> get trackSelections async {
-    if (!value.isInitialized || _isDisposed) {
-      return null;
-    }
-    return await _videoPlayerPlatform.getTrackSelections(_textureId);
-  }
-
-  /// Sets the selected video track selection.
-  Future<void> setTrackSelection(MdkTrackSelection trackSelection) async {
-    if (!value.isInitialized || _isDisposed) {
-      return;
-    }
-    return _videoPlayerPlatform.setTrackSelection(_textureId, trackSelection);
-  }
-
   Future<void> updateDataSource(DataSource dataSource) async {
     if (_isDisposedOrNotInitialized) {
       return;
@@ -714,6 +701,59 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
 
     value = value.copyWith(playbackSpeed: speed);
     await _applyPlaybackSpeed();
+  }
+
+  /// Gets the video [MdkTrackSelection]s. For convenience if the video file has at
+  /// least one [MdkTrackSelection] for a specific type, the auto track selection will
+  /// be added to this list with that type.
+  Future<List<VideoStreamInfo>> getVideoTracks() async {
+    return _videoPlayerPlatform.getVideoTracks(textureId);
+  }
+
+  Future<List<AudioStreamInfo>> getAudioTracks() async {
+    return _videoPlayerPlatform.getAudioTracks(textureId);
+
+  }
+
+  /// Gets the subtitle Tracks.
+  Future<List<SubtitleStreamInfo>> getSubtitleTracks() async {
+    return _videoPlayerPlatform.getSubtitleTracks(textureId);
+
+  }
+
+
+  /// Gets the selected video track selection.
+  /// Returns -1 if no video track is selected.
+  int getActiveVideoTrack() {
+    return _videoPlayerPlatform.getActiveVideoTrack(textureId);
+  }
+
+  /// Gets the selected audio track selection.
+  /// Returns -1 if no audio track is selected.
+  int getActiveAudioTrack() {
+    return _videoPlayerPlatform.getActiveAudioTrack(textureId);
+  }
+
+  /// Gets the selected subtitle track selection.
+  /// Returns -1 if no subtitle track is selected.
+  int getActiveSubtitleTrack() {
+    return _videoPlayerPlatform.getActiveSubtitleTrack(textureId);
+  }
+
+
+  /// Sets the selected video track selection.
+  void setVideoTrack( int trackId) {
+    return _videoPlayerPlatform.setVideoTrack(textureId, trackId);
+  }
+
+  /// Sets the selected audio track selection.
+  void setAudioTrack( int trackId) {
+    return _videoPlayerPlatform.setAudioTrack(textureId, trackId);
+  }
+
+  /// Sets the selected subtitle track selection.
+  void setSubtitleTrack( int trackId) {
+    return _videoPlayerPlatform.setSubtitleTrack(textureId, trackId);
   }
 
   /// Sets the caption offset.
@@ -889,6 +929,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
 
 class _VideoPlayerWithRotation extends StatelessWidget {
   const _VideoPlayerWithRotation({required this.rotation, required this.child});
+
   final int rotation;
   final Widget child;
 

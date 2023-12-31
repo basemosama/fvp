@@ -324,6 +324,26 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
    return subtitleTracks;
   }
 
+  /// Gets the selected video track selection.
+  /// Returns -1 if no video track is selected.
+  int getActiveVideoTrack(int textureId){
+    final player = _players[textureId];
+    return player?.activeVideoTracks[0] ?? -1;
+  }
+
+  /// Gets the selected audio track selection.
+  /// Returns -1 if no audio track is selected.
+  int getActiveAudioTrack(int textureId){
+    final player = _players[textureId];
+    return player?.activeAudioTracks[0] ?? -1;
+  }
+
+  /// Gets the selected subtitle track selection.
+  /// Returns -1 if no subtitle track is selected.
+  int getActiveSubtitleTrack(int textureId){
+    final player = _players[textureId];
+    return player?.activeSubtitleTracks[0] ?? -1;
+  }
 
   /// Sets the selected video track selection.
   void setVideoTrack(
@@ -368,66 +388,6 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   }
 
 
-  Future<List<MdkTrackSelection>> getTrackSelections(int textureId) async {
-    final videoTracks = await getVideoTracks(textureId);
-    final audioTracks =await getAudioTracks(textureId);
-    final subtitleTracks =await getSubtitleTracks(textureId);
-
-    final player = _players[textureId];
-    final activeVideoTrack = player?.activeVideoTracks.firstOrNull;
-    final activeAudioTrack = player?.activeAudioTracks.firstOrNull;
-    final activeSubtitleTrack = player?.activeSubtitleTracks.firstOrNull;
-
-    final videoTrackSelection = videoTracks.map((e) => MdkTrackSelection(
-      trackId: e.index,
-      trackName: e.metadata['title']??'',
-      trackType: TrackSelectionType.video,
-      isSelected: e.index == activeVideoTrack,
-      size: Size(e.codec.width.toDouble(), (e.codec.height.toDouble() / e.codec.par).roundToDouble()),
-      label: e.metadata['label']??'',
-      language: e.metadata['language']??'',
-    ));
-
-    final audioTrackSelection = audioTracks.map((e) => MdkTrackSelection(
-      trackId: e.index,
-      trackName: e.metadata['title']??'',
-      trackType: TrackSelectionType.audio,
-      isSelected: e.index == activeAudioTrack,
-      size: null,
-      label: e.metadata['label']??'',
-      language: e.metadata['language']??'',
-    ));
-
-    final subtitleTrackSelection = subtitleTracks.map((e) => MdkTrackSelection(
-      trackId: e.index,
-      trackName: e.metadata['title']??'',
-      trackType: TrackSelectionType.subtitle,
-      isSelected: e.index == activeSubtitleTrack,
-      size: null,
-      label: e.metadata['label']??'',
-      language: e.metadata['language']??'',
-    ));
-
-    return [...videoTrackSelection,...audioTrackSelection,...subtitleTrackSelection];
-
-  }
-
-  /// Sets the selected track selection.
-  void setTrackSelection(int textureId, MdkTrackSelection trackSelection) {
-    final player=_players[textureId];
-    switch (trackSelection.trackType) {
-      case TrackSelectionType.video:
-        player?.setActiveTracks(MediaType.video, [trackSelection.trackId]);
-        break;
-      case TrackSelectionType.audio:
-        player?.setActiveTracks(MediaType.audio, [trackSelection.trackId]);
-        break;
-      case TrackSelectionType.subtitle:
-        player?.setActiveTracks(MediaType.subtitle, [trackSelection.trackId]);
-        break;
-    }
-
-  }
 
 
   ///Sets the subtitle track selection.
