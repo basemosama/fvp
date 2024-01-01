@@ -114,8 +114,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   }
 
 
-
-   final _players = <int, MdkPlayer>{};
+   static final _players = <int, MdkPlayer>{};
    Map<String, Object>? _globalOpts;
    Map<String, String>? _playerOpts;
    int? _maxWidth;
@@ -455,6 +454,12 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     if (player != null) {
       player.media = uri!;
       player.prepare();
+      player.updateTexture(
+          width: _maxWidth,
+          height: _maxHeight,
+          tunnel: _tunnel,
+          fit: _fitMaxSize,
+      );
     }
   }
 
