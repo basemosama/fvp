@@ -260,7 +260,7 @@ class MdkVideoPlayerValue {
 ///
 /// Instances must be initialized with initialize.
 ///
-/// The video is displayed in a Flutter app by creating a [VideoPlayer] widget.
+/// The video is displayed in a Flutter app by creating a [MdkVideoPlayer] widget.
 ///
 /// To reclaim the resources used by the player call [dispose].
 ///
@@ -865,20 +865,20 @@ class _VideoAppLifeCycleObserver extends Object with WidgetsBindingObserver {
 }
 
 /// Widget that displays the video controlled by [controller].
-class VideoPlayer extends StatefulWidget {
+class MdkVideoPlayer extends StatefulWidget {
   /// Uses the given [controller] for all video rendered in this widget.
-  const VideoPlayer(this.controller, {key});
+  const MdkVideoPlayer(this.controller, {super.key});
 
   /// The [MdkVideoPlayerController] responsible for the video being rendered in
   /// this widget.
   final MdkVideoPlayerController controller;
 
   @override
-  State<VideoPlayer> createState() => _VideoPlayerState();
+  State<MdkVideoPlayer> createState() => _MdkVideoPlayerState();
 }
 
-class _VideoPlayerState extends State<VideoPlayer> {
-  _VideoPlayerState() {
+class _MdkVideoPlayerState extends State<MdkVideoPlayer> {
+  _MdkVideoPlayerState() {
     _listener = () {
       final int newTextureId = widget.controller.textureId;
       if (newTextureId != _textureId) {
@@ -903,7 +903,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
   }
 
   @override
-  void didUpdateWidget(VideoPlayer oldWidget) {
+  void didUpdateWidget(MdkVideoPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     oldWidget.controller.removeListener(_listener);
     _textureId = widget.controller.textureId;

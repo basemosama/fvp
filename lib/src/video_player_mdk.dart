@@ -7,7 +7,6 @@ import 'dart:io';
 import 'package:flutter/widgets.dart'; //
 import 'package:flutter/services.dart';
 import 'package:fvp/mdk.dart';
-import 'package:fvp/src/video_player_options.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:logging/logging.dart';
@@ -17,7 +16,7 @@ import '../mdk.dart' as mdk;
 
 final _log = Logger('fvp');
 
-class MdkVideoPlayer extends mdk.Player {
+class MdkPlayer extends mdk.Player {
   final streamCtl = StreamController<VideoEvent>();
 
   @override
@@ -29,7 +28,7 @@ class MdkVideoPlayer extends mdk.Player {
     super.dispose();
   }
 
-  MdkVideoPlayer() : super() {
+  MdkPlayer() : super() {
     onMediaStatus((oldValue, newValue) {
       _log.fine(
           '$hashCode player$nativeHandle onMediaStatus: $oldValue => $newValue');
@@ -116,7 +115,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
 
 
 
-  static final _players = <int, MdkVideoPlayer>{};
+  static final _players = <int, MdkPlayer>{};
   static Map<String, Object>? _globalOpts;
   static Map<String, String>? _playerOpts;
   static int? _maxWidth;
@@ -219,7 +218,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
         uri = dataSource.uri;
         break;
     }
-    final player = MdkVideoPlayer();
+    final player = MdkPlayer();
     _log.fine('$hashCode player${player.nativeHandle} create($uri)');
 
     //player.setProperty("keep_open", "1");
@@ -386,9 +385,6 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       player.prepare();
     }
   }
-
-
-
 
   ///Sets the subtitle track selection.
   void setSubtitleTrack(

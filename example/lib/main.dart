@@ -189,7 +189,7 @@ class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: <Widget>[
-                  VideoPlayer(_controller),
+                  MdkVideoPlayer(_controller),
                   _ControlsOverlay(controller: _controller),
                   VideoProgressIndicator(_controller, allowScrubbing: true),
                 ],
@@ -253,7 +253,7 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
               child: Stack(
                 alignment: Alignment.bottomCenter,
                 children: <Widget>[
-                  VideoPlayer(_controller),
+                  MdkVideoPlayer(_controller),
                   ClosedCaption(text: _controller.value.caption.text),
                   _ControlsOverlay(controller: _controller),
                   VideoProgressIndicator(_controller, allowScrubbing: true),
@@ -432,7 +432,7 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
             if (snapshot.data ?? false) {
               return AspectRatio(
                 aspectRatio: _videoPlayerController.value.aspectRatio,
-                child: VideoPlayer(_videoPlayerController),
+                child: MdkVideoPlayer(_videoPlayerController),
               );
             } else {
               return const Text('waiting for video to load');
