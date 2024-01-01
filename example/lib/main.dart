@@ -8,11 +8,9 @@
 /// video.
 
 import 'package:flutter/material.dart';
-import 'package:fvp/fvp.dart' as fvp;
 import 'package:fvp/mdk.dart';
 
 void main() {
-  fvp.registerWith();
   runApp(
     MaterialApp(
       home: _App(),

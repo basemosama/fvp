@@ -9,10 +9,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:fvp/src/video_player/closed_caption_file.dart';
 import 'package:fvp/src/video_player_mdk.dart';
-import 'package:fvp/src/video_player_options.dart';
-import 'package:meta/meta.dart';
 
 import '../mdk.dart';
 
@@ -397,7 +394,46 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   int get textureId => _textureId;
 
   /// Attempts to open the given [dataSource] and load metadata about the video.
-  Future<void> initialize() async {
+  /// [options] can be
+  /// 'platforms': a list of [Platform.operatingSystem], only these platforms will use this plugin implementation. You can still use official implementation for android and ios if they are not in the list.
+  /// If 'platforms' not set, this implementation will be used for all platforms.
+  ///
+  /// 'fastSeek': bool. default is false, faster but not accurate, i.e. result position can be a few seconds different from requested position
+  ///
+  /// "video.decoders": a list of decoder names. supported decoders: https://github.com/wang-bin/mdk-sdk/wiki/Decoders
+  ///
+  /// "maxWidth", "maxHeight": texture max size. if not set, video frame size is used. a small value can reduce memory cost, but may result in lower image quality.
+  ///
+  /// 'lowLatency': int. default is 0. reduce network stream latency. 1: for vod. 2: for live stream, may drop frames to ensure the latest content is displayed
+  ///
+  /// "player": backend player properties of type Map<String, String>. See https://github.com/wang-bin/mdk-sdk/wiki/Player-APIs#void-setpropertyconst-stdstring-key-const-stdstring-value
+  ///
+  /// "global": backend global options of type Map<String, Object>. See https://github.com/wang-bin/mdk-sdk/wiki/Global-Options
+  ///
+  /// "tunnel": android only, default is false. AMediacodec/MediaCodec decoder output to a SurfaceTexture surface directly without OpenGL. Maybe more efficient, but some features are not supported, e.g. HDR tone mapping, less codecs.
+  ///
+  /// Example:
+  /// ```dart
+  /// registerWith({options: {
+  ///     'platforms': ['windows', 'linux', 'macos'], # or other Platform.operatingSystem
+  ///     'video.decoders': ['BRAW:scale=1/4', 'auto'],
+  ///     'maxWidth': screenWidth,
+  ///     'maxHeight': screenHeight,
+  ///   }});
+  /// ```
+  ///
+  Future<void> initialize({
+    int? maxWidth,
+    int? maxHeight,
+    bool? fitMaxSize,
+    bool? tunnel,
+    int lowLatency = 0,
+    bool fastSeek = false,
+    List<String>? decoders,
+    Map<String, Object>? globalOpts,
+    Map<String, String>? playerOpts,
+    List<String>? platforms,
+  }) async {
     final bool allowBackgroundPlayback =
         videoPlayerOptions?.allowBackgroundPlayback ?? false;
     if (!allowBackgroundPlayback) {
@@ -442,6 +478,18 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
       await _videoPlayerPlatform
           .setMixWithOthers(videoPlayerOptions!.mixWithOthers);
     }
+    _videoPlayerPlatform.registerVideoPlayerPlatformsWith(options: {
+      'platforms': platforms,
+      'fastSeek': fastSeek,
+      'lowLatency': lowLatency,
+      'global': globalOpts,
+      'player': playerOpts,
+      'video.decoders': decoders,
+      'tunnel': tunnel,
+      'maxWidth': maxWidth,
+      'maxHeight': maxHeight,
+      'fitMaxSize': fitMaxSize,
+    });
 
     _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedTextureId;
@@ -712,15 +760,12 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
 
   Future<List<MdkTrackSelection>> getAudioTracks() async {
     return _videoPlayerPlatform.getAudioTracks(textureId);
-
   }
 
   /// Gets the subtitle Tracks.
   Future<List<MdkTrackSelection>> getSubtitleTracks() async {
     return _videoPlayerPlatform.getSubtitleTracks(textureId);
-
   }
-
 
   /// Gets the selected video track selection.
   /// Returns -1 if no video track is selected.
@@ -740,19 +785,18 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
     return _videoPlayerPlatform.getActiveSubtitleTrack(textureId);
   }
 
-
   /// Sets the selected video track selection.
-  void setVideoTrack( int trackId) {
+  void setVideoTrack(int trackId) {
     return _videoPlayerPlatform.setVideoTrack(textureId, trackId);
   }
 
   /// Sets the selected audio track selection.
-  void setAudioTrack( int trackId) {
+  void setAudioTrack(int trackId) {
     return _videoPlayerPlatform.setAudioTrack(textureId, trackId);
   }
 
   /// Sets the selected subtitle track selection.
-  void setSubtitleTrack( int trackId) {
+  void setSubtitleTrack(int trackId) {
     return _videoPlayerPlatform.setSubtitleTrack(textureId, trackId);
   }
 

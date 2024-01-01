@@ -115,17 +115,17 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
 
 
 
-  static final _players = <int, MdkPlayer>{};
-  static Map<String, Object>? _globalOpts;
-  static Map<String, String>? _playerOpts;
-  static int? _maxWidth;
-  static int? _maxHeight;
-  static bool? _fitMaxSize;
-  static bool? _tunnel;
-  static int _lowLatency = 0;
-  static int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
-  static List<String>? _decoders;
-  static final _mdkLog = Logger('mdk');
+   final _players = <int, MdkPlayer>{};
+   Map<String, Object>? _globalOpts;
+   Map<String, String>? _playerOpts;
+   int? _maxWidth;
+   int? _maxHeight;
+   bool? _fitMaxSize;
+   bool? _tunnel;
+   int _lowLatency = 0;
+   int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
+   List<String>? _decoders;
+   final _mdkLog = Logger('mdk');
 
 /*
   Registers this class as the default instance of [VideoPlayerPlatform].
@@ -134,7 +134,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   "video.decoders": a list of decoder names. supported decoders: https://github.com/wang-bin/mdk-sdk/wiki/Decoders
   "maxWidth", "maxHeight": texture max size. if not set, video frame size is used. a small value can reduce memory cost, but may result in lower image quality.
  */
-  static void registerVideoPlayerPlatformsWith({dynamic options}) {
+   void registerVideoPlayerPlatformsWith({dynamic options}) {
     // prefer hardware decoders
     if (options is Map<String, dynamic>) {
       final platforms = options['platforms'];
