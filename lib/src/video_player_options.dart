@@ -400,7 +400,7 @@ class MdkTrackSelection {
   final int trackId;
 
   /// The type of the track selection.
-  final TrackSelectionType trackType;
+  final MdkTrackSelectionType trackType;
 
   /// The name of track selection that uses [TrackSelectionNameResource] to represent
   /// the suggestion name for each track selection based on its type.
@@ -411,7 +411,7 @@ class MdkTrackSelection {
   final bool isSelected;
 
   /// The size of video track selection. This will be null if the [trackType]
-  /// is not [TrackSelectionType.video] or an unknown or a auto track selection.
+  /// is not [MdkTrackSelectionType.video] or an unknown or a auto track selection.
   ///
   /// If the track selection doesn't specify the width or height this may be null.
   final Size? size;
@@ -423,27 +423,27 @@ class MdkTrackSelection {
   final TrackSelectionRoleType? role;
 
   /// The language of track selection. This will be null if the [trackType]
-  /// is not [TrackSelectionType.audio] and [TrackSelectionType.subtitle] or an unknown
+  /// is not [MdkTrackSelectionType.audio] and [MdkTrackSelectionType.subtitle] or an unknown
   /// or a auto track selection.
   ///
   /// If the track selection doesn't specify the language this may be null.
   final String? language;
 
   /// The label of track selection. This will be null if the [trackType]
-  /// is not [TrackSelectionType.audio] and [TrackSelectionType.subtitle] or an unknown
+  /// is not [MdkTrackSelectionType.audio] and [MdkTrackSelectionType.subtitle] or an unknown
   /// or a auto track selection.
   ///
   /// If the track selection doesn't specify the label this may be null.
   final String? label;
 
   /// The channelCount of track selection. This will be null if the [trackType]
-  /// is not [TrackSelectionType.audio] or an unknown or a auto track selection.
+  /// is not [MdkTrackSelectionType.audio] or an unknown or a auto track selection.
   ///
   /// If the track selection doesn't specify the channelCount this may be null.
   final TrackSelectionChannelType? channel;
 
   /// The label of track selection. This will be null if the [trackType]
-  /// is not [TrackSelectionType.video] and [TrackSelectionType.audio] or an unknown
+  /// is not [MdkTrackSelectionType.video] and [MdkTrackSelectionType.audio] or an unknown
   /// or a auto track selection.
   ///
   /// If the track selection doesn't specify the bitrate this may be null.
@@ -493,7 +493,7 @@ class MdkTrackSelection {
 }
 
 /// Type of the track selection.
-enum TrackSelectionType {
+enum MdkTrackSelectionType {
   /// The video track selection.
   video,
 
@@ -519,7 +519,7 @@ enum TrackSelectionRoleType {
   closedCaptions,
 }
 
-/// Type of the track selection channel for [TrackSelectionType.audio].
+/// Type of the track selection channel for [MdkTrackSelectionType.audio].
 enum TrackSelectionChannelType {
   /// The mono channel.
   mono,
@@ -563,25 +563,25 @@ class TrackSelectionNameResource {
   /// [MdkTrackSelection.trackName] is `Unknown` if track selection is unknown.
   final String trackUnknown;
 
-  /// `1080P` quality for [TrackSelectionType.video] track selection.
+  /// `1080P` quality for [MdkTrackSelectionType.video] track selection.
   final String trackBitrate1080p;
 
-  /// `720P` quality for [TrackSelectionType.video] track selection.
+  /// `720P` quality for [MdkTrackSelectionType.video] track selection.
   final String trackBitrate720p;
 
-  /// `480P` quality for [TrackSelectionType.video] track selection.
+  /// `480P` quality for [MdkTrackSelectionType.video] track selection.
   final String trackBitrate480p;
 
-  /// `360P` quality for [TrackSelectionType.video] track selection.
+  /// `360P` quality for [MdkTrackSelectionType.video] track selection.
   final String trackBitrate360p;
 
-  /// `240P` quality for [TrackSelectionType.video] track selection.
+  /// `240P` quality for [MdkTrackSelectionType.video] track selection.
   final String trackBitrate240p;
 
-  /// `160P` quality for [TrackSelectionType.video] track selection.
+  /// `160P` quality for [MdkTrackSelectionType.video] track selection.
   final String trackBitrate160p;
 
-  /// `×` resolution separator for [TrackSelectionType.video] track selection.
+  /// `×` resolution separator for [MdkTrackSelectionType.video] track selection.
   ///
   /// For example if track selection bitrate is not in range of 0.3 to 2.8 Mbps,
   /// [MdkTrackSelection.trackName] will be `2048 × 1080`.
@@ -592,15 +592,15 @@ class TrackSelectionNameResource {
   /// For example `3.5 Mbps`.
   final String trackBitrateMbps;
 
-  /// `Mono` for [TrackSelectionType.audio] if track selection
+  /// `Mono` for [MdkTrackSelectionType.audio] if track selection
   /// channel count is 1.
   final String trackMono;
 
-  /// `Stereo` for [TrackSelectionType.audio] if track selection
+  /// `Stereo` for [MdkTrackSelectionType.audio] if track selection
   /// channel count is 1.
   final String trackStereo;
 
-  /// `Surround sound` for [TrackSelectionType.audio] if track selection
+  /// `Surround sound` for [MdkTrackSelectionType.audio] if track selection
   /// channel count is 1.
   final String trackSurround;
 

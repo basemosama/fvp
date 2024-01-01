@@ -706,17 +706,17 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   /// Gets the video [MdkTrackSelection]s. For convenience if the video file has at
   /// least one [MdkTrackSelection] for a specific type, the auto track selection will
   /// be added to this list with that type.
-  Future<List<VideoStreamInfo>> getVideoTracks() async {
+  Future<List<MdkTrackSelection>> getVideoTracks() async {
     return _videoPlayerPlatform.getVideoTracks(textureId);
   }
 
-  Future<List<AudioStreamInfo>> getAudioTracks() async {
+  Future<List<MdkTrackSelection>> getAudioTracks() async {
     return _videoPlayerPlatform.getAudioTracks(textureId);
 
   }
 
   /// Gets the subtitle Tracks.
-  Future<List<SubtitleStreamInfo>> getSubtitleTracks() async {
+  Future<List<MdkTrackSelection>> getSubtitleTracks() async {
     return _videoPlayerPlatform.getSubtitleTracks(textureId);
 
   }

@@ -299,28 +299,100 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   /// Gets the video [MdkTrackSelection]s. For convenience if the video file has at
   /// least one [MdkTrackSelection] for a specific type, the auto track selection will
   /// be added to this list with that type.
-  Future<List<VideoStreamInfo>> getVideoTracks(
+  Future<List<MdkTrackSelection>> getVideoTracks(
     int textureId, ) async {
    final player = _players[textureId];
    final videoTracks = player?.mediaInfo.video ??[];
-   return videoTracks;
+
+   return videoTracks.map((e) {
+
+     final int bitrate = e.codec.bitRate;
+     final int width = e.codec.width;
+     final int height = e.codec.height;
+     const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+
+     final trackSelectionName = _joinWithSeparator([
+       _buildVideoQualityOrResolutionString(
+           bitrate, width, height, trackSelectionNameResource),
+     ], trackSelectionNameResource.trackItemListSeparator);
+     return  MdkTrackSelection(
+       trackId: e.index,
+       trackType: MdkTrackSelectionType.video,
+       trackName: trackSelectionName.isEmpty
+           ? trackSelectionNameResource.trackUnknown
+           : trackSelectionName,
+       isSelected: false,
+       size: width == -1 || height == -1
+           ? null
+           : Size(width.toDouble(), height.toDouble()),
+       bitrate: bitrate == -1 ? null : bitrate,
+     );
+   }).toList();
+
   }
 
 
-  Future<List<AudioStreamInfo>> getAudioTracks(
+
+  Future<List<MdkTrackSelection>> getAudioTracks(
     int textureId,) async {
    final player = _players[textureId];
    final audioTracks = player?.mediaInfo.audio ??[];
-   return audioTracks;
+
+
+   const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+    return audioTracks.map((e) {
+
+      final String language = e.metadata['language'] ??'';
+      final String label = e.metadata['label'] as String;
+      final int channelCount = e.codec.channels;
+      final int bitrate = e.codec.bitRate;
+      final trackSelectionName = _joinWithSeparator([
+        _buildLanguageOrLabelString(
+            language , label, trackSelectionNameResource),
+        _buildAudioChannelString(
+            channelCount, trackSelectionNameResource),
+        _buildAvgBitrateString(bitrate, trackSelectionNameResource),
+      ], trackSelectionNameResource.trackItemListSeparator);
+      return MdkTrackSelection(
+        trackId: e.index,
+        trackType: MdkTrackSelectionType.audio,
+        trackName: trackSelectionName.isEmpty
+            ? trackSelectionNameResource.trackUnknown
+            : trackSelectionName,
+        isSelected: false,
+        language: language.isEmpty ? null : language,
+        label: label.isEmpty ? null : label,
+        channel: _toChannelType(channelCount),
+        bitrate: bitrate == -1 ? null : bitrate,
+      );}
+    ).toList();
   }
 
 
-  Future<List<SubtitleStreamInfo>> getSubtitleTracks(
+  Future<List<MdkTrackSelection>> getSubtitleTracks(
     int textureId,) async {
    final player = _players[textureId];
    final subtitleTracks = player?.mediaInfo.subtitle ??[];
 
-   return subtitleTracks;
+   const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+   return subtitleTracks.map((e) {
+     final String language = e.metadata['language'] ??'';
+     final String label = e.metadata['label'] as String;
+     final trackSelectionName = _joinWithSeparator([
+       _buildLanguageOrLabelString(
+           language , label, trackSelectionNameResource),
+     ], trackSelectionNameResource.trackItemListSeparator);
+     return MdkTrackSelection(
+       trackId: e.index,
+       trackType: MdkTrackSelectionType.subtitle,
+       trackName: trackSelectionName.isEmpty
+           ? trackSelectionNameResource.trackUnknown
+           : trackSelectionName,
+       isSelected: false,
+       language: language.isEmpty ? null : language,
+       label: label.isEmpty ? null : label,
+     );}
+   ).toList();
   }
 
   /// Gets the selected video track selection.
@@ -447,5 +519,112 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     return asset;
   }
 
+
+  TrackSelectionChannelType? _toChannelType(int channelCount) {
+    switch (channelCount) {
+      case 1:
+        return TrackSelectionChannelType.mono;
+      case 2:
+        return TrackSelectionChannelType.stereo;
+      default:
+        return TrackSelectionChannelType.surround;
+    }
+  }
+
+  String _buildVideoQualityOrResolutionString(
+      int bitrate,
+      int width,
+      int height,
+      TrackSelectionNameResource trackSelectionNameResource,
+      ) {
+    const int bitrate1080p = 2800000;
+    const int bitrate720p = 1600000;
+    const int bitrate480p = 700000;
+    const int bitrate360p = 530000;
+    const int bitrate240p = 400000;
+    const int bitrate160p = 300000;
+
+    if (bitrate != -1 && bitrate <= bitrate160p) {
+      return trackSelectionNameResource.trackBitrate160p;
+    }
+    if (bitrate != -1 && bitrate <= bitrate240p) {
+      return trackSelectionNameResource.trackBitrate240p;
+    }
+    if (bitrate != -1 && bitrate <= bitrate360p) {
+      return trackSelectionNameResource.trackBitrate360p;
+    }
+    if (bitrate != -1 && bitrate <= bitrate480p) {
+      return trackSelectionNameResource.trackBitrate480p;
+    }
+    if (bitrate != -1 && bitrate <= bitrate720p) {
+      return trackSelectionNameResource.trackBitrate720p;
+    }
+    if (bitrate != -1 && bitrate <= bitrate1080p) {
+      return trackSelectionNameResource.trackBitrate1080p;
+    }
+
+    return _joinWithSeparator([
+      _buildResolutionString(width, height, trackSelectionNameResource),
+      _buildAvgBitrateString(bitrate, trackSelectionNameResource),
+    ], trackSelectionNameResource.trackItemListSeparator);
+  }
+
+  String _buildResolutionString(int width, int height,
+      TrackSelectionNameResource trackSelectionNameResource) {
+    if (width == -1 || height == -1) {
+      return '';
+    }
+    return [width, trackSelectionNameResource.trackResolutionSeparator, height]
+        .join(' ');
+  }
+
+  String _buildAvgBitrateString(
+      int bitrate, TrackSelectionNameResource trackSelectionNameResource) {
+    if (bitrate == -1) {
+      return '';
+    }
+    return [
+      (bitrate / 1000000).toStringAsFixed(2),
+      trackSelectionNameResource.trackBitrateMbps,
+    ].join(' ');
+  }
+
+  String _buildLanguageOrLabelString(
+      String language,
+      String label,
+      TrackSelectionNameResource trackSelectionNameResource,
+      ) {
+    String languageAndRole = _joinWithSeparator(
+      [language,],
+      trackSelectionNameResource.trackItemListSeparator,
+    );
+    return languageAndRole.isEmpty ? label : languageAndRole;
+  }
+  String _buildAudioChannelString(
+      int channelCount, TrackSelectionNameResource trackSelectionNameResource) {
+    if (channelCount == -1) {
+      return '';
+    }
+    switch (channelCount) {
+      case 1:
+        return trackSelectionNameResource.trackMono;
+      case 2:
+        return trackSelectionNameResource.trackStereo;
+      default:
+        return trackSelectionNameResource.trackSurround;
+    }
+  }
+
+  String _joinWithSeparator(List<String> names, String separator) {
+    String jointNames = '';
+    for (String name in names) {
+      if (jointNames.isEmpty) {
+        jointNames = name;
+      } else if (name.isNotEmpty) {
+        jointNames += [separator, name].join(' ');
+      }
+    }
+    return jointNames;
+  }
 
 }
