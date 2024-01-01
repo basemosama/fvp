@@ -256,13 +256,6 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
         height: _maxHeight,
         tunnel: _tunnel,
         fit: _fitMaxSize);
-    if (tex < 0) {
-      player.dispose();
-      throw PlatformException(
-        code: 'media open error',
-        message: 'invalid or unsupported media',
-      );
-    }
     _players[tex] = player;
     return tex;
   }

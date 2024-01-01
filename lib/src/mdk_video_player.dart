@@ -493,6 +493,8 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
 
     _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedTextureId;
+
+
     _creatingCompleter!.complete(null);
     final Completer<void> initializingCompleter = Completer<void>();
 
@@ -562,6 +564,15 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
     _eventSubscription = _videoPlayerPlatform
         .videoEventsFor(_textureId)
         .listen(eventListener, onError: errorListener);
+
+    if (_textureId < 0) {
+      dispose();
+
+      errorListener( PlatformException(
+        code: 'media open error',
+        message: 'invalid or unsupported media',
+      ));
+    }
     return initializingCompleter.future;
   }
 
