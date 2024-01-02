@@ -231,6 +231,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     if (_decoders != null) {
       player.videoDecoders = _decoders!;
     }
+
     if (_lowLatency > 0) {
       player.setProperty('avformat.fflags', '+nobuffer');
       player.setProperty('avformat.fpsprobesize', '0');
@@ -240,6 +241,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
         player.setBufferRange(min: 0);
       }
     }
+
 
     if (dataSource.httpHeaders.isNotEmpty) {
       String headers = '';
@@ -298,10 +300,14 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
 
    return videoTracks.map((e) {
 
-     final int bitrate = e.codec.bitRate;
+      int bitrate = e.codec.bitRate;
      final int width = e.codec.width;
      final int height = e.codec.height;
      const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+
+     if(bitrate <= 0){
+       bitrate = e.metadata.containsKey('bitrate') ? (e.metadata['bitrate'] as int?)??-1 : -1;
+     }
 
      final trackSelectionName = _joinWithSeparator([
        _buildVideoQualityOrResolutionString(
@@ -335,9 +341,10 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     return audioTracks.map((e) {
 
       final String language = e.metadata['language'] ??'';
-      final String label = e.metadata['label'] as String;
+      final String label = e.metadata['label'] ??'';
       final int channelCount = e.codec.channels;
-      final int bitrate = e.codec.bitRate;
+      int bitrate = e.codec.bitRate;
+
       final trackSelectionName = _joinWithSeparator([
         _buildLanguageOrLabelString(
             language , label, trackSelectionNameResource),
@@ -369,7 +376,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
    const trackSelectionNameResource = mdk.TrackSelectionNameResource();
    return subtitleTracks.map((e) {
      final String language = e.metadata['language'] ??'';
-     final String label = e.metadata['label'] as String;
+     final String label = e.metadata['label']??'';
      final trackSelectionName = _joinWithSeparator([
        _buildLanguageOrLabelString(
            language , label, trackSelectionNameResource),
