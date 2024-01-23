@@ -1,6 +1,6 @@
 # Miscellaneous
 .vscode/settings.json
-mdk-sdk/
+#mdk-sdk/
 *.dll
 *.so
 *.7z

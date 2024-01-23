@@ -1,0 +1,3 @@
+E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/arm64-v8a/CMakeFiles/fvp_plugin.dir
+E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/arm64-v8a/CMakeFiles/edit_cache.dir
+E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/arm64-v8a/CMakeFiles/rebuild_cache.dir

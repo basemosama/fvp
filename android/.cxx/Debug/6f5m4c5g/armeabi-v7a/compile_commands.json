@@ -1,0 +1,12 @@
+[
+{
+  "directory": "E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/armeabi-v7a",
+  "command": "E:\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=armv7-none-linux-androideabi16 --gcc-toolchain=E:/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DDART_SHARED_LIB -DFLUTTER_PLUGIN_IMPL -Dfvp_plugin_EXPORTS -isystem ../../../../mdk-sdk/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -fvisibility=hidden -std=gnu++20 -o CMakeFiles\\fvp_plugin.dir\\fvp_plugin.cpp.o -c E:\\Sourcaya\\Apps\\fvp\\android\\fvp_plugin.cpp",
+  "file": "E:/Sourcaya/Apps/fvp/android/fvp_plugin.cpp"
+},
+{
+  "directory": "E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/armeabi-v7a",
+  "command": "E:\\Sdk\\ndk\\23.1.7779620\\toolchains\\llvm\\prebuilt\\windows-x86_64\\bin\\clang++.exe --target=armv7-none-linux-androideabi16 --gcc-toolchain=E:/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/windows-x86_64 --sysroot=E:/Sdk/ndk/23.1.7779620/toolchains/llvm/prebuilt/windows-x86_64/sysroot -DDART_SHARED_LIB -DFLUTTER_PLUGIN_IMPL -Dfvp_plugin_EXPORTS -isystem ../../../../mdk-sdk/include -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -D_FORTIFY_SOURCE=2 -march=armv7-a -mthumb -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -fvisibility=hidden -std=gnu++20 -o CMakeFiles\\fvp_plugin.dir\\E_\\Sourcaya\\Apps\\fvp\\lib\\src\\callbacks.cpp.o -c E:\\Sourcaya\\Apps\\fvp\\lib\\src\\callbacks.cpp",
+  "file": "E:\\Sourcaya\\Apps\\fvp\\lib\\src\\callbacks.cpp"
+}
+]
