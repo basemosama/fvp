@@ -2,7 +2,7 @@
 .vscode/settings.json
 #mdk-sdk/
 *.dll
-*.so
+#*.so
 *.7z
 *.apk
 *.aab
