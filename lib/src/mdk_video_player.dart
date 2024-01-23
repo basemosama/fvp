@@ -494,7 +494,6 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
     _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedTextureId;
 
-
     _creatingCompleter!.complete(null);
     final Completer<void> initializingCompleter = Completer<void>();
 
@@ -568,7 +567,7 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
     if (_textureId < 0) {
       dispose();
 
-      errorListener( PlatformException(
+      errorListener(PlatformException(
         code: 'media open error',
         message: 'invalid or unsupported media',
       ));
@@ -776,6 +775,10 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   /// Gets the subtitle Tracks.
   Future<List<MdkTrackSelection>> getSubtitleTracks() async {
     return _videoPlayerPlatform.getSubtitleTracks(textureId);
+  }
+
+  List<SubtitleStreamInfo>? getActiveSubtitle() {
+    return _videoPlayerPlatform.getSubtitle(textureId);
   }
 
   /// Gets the selected video track selection.

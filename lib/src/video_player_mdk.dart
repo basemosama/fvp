@@ -4,15 +4,15 @@
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:flutter/widgets.dart'; //
-import 'package:flutter/services.dart';
 import 'package:fvp/mdk.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'package:logging/logging.dart';
-import 'extensions.dart';
 
 import '../mdk.dart' as mdk;
+import 'extensions.dart';
 
 final _log = Logger('fvp');
 
@@ -88,10 +88,10 @@ class MdkPlayer extends mdk.Player {
     });
   }
 }
+
 class _PlaceholderImplementation extends MdkVideoPlayerPlatform {}
 
 class MdkVideoPlayerPlatform extends PlatformInterface {
-
   /// Constructs a VideoPlayerPlatform.
   MdkVideoPlayerPlatform() : super(token: _token);
 
@@ -113,18 +113,17 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-
-   static final _players = <int, MdkPlayer>{};
-   Map<String, Object>? _globalOpts;
-   Map<String, String>? _playerOpts;
-   int? _maxWidth;
-   int? _maxHeight;
-   bool? _fitMaxSize;
-   bool? _tunnel;
-   int _lowLatency = 0;
-   int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
-   List<String>? _decoders;
-   final _mdkLog = Logger('mdk');
+  static final _players = <int, MdkPlayer>{};
+  Map<String, Object>? _globalOpts;
+  Map<String, String>? _playerOpts;
+  int? _maxWidth;
+  int? _maxHeight;
+  bool? _fitMaxSize;
+  bool? _tunnel;
+  int _lowLatency = 0;
+  int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
+  List<String>? _decoders;
+  final _mdkLog = Logger('mdk');
 
 /*
   Registers this class as the default instance of [VideoPlayerPlatform].
@@ -133,7 +132,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   "video.decoders": a list of decoder names. supported decoders: https://github.com/wang-bin/mdk-sdk/wiki/Decoders
   "maxWidth", "maxHeight": texture max size. if not set, video frame size is used. a small value can reduce memory cost, but may result in lower image quality.
  */
-   void registerVideoPlayerPlatformsWith({dynamic options}) {
+  void registerVideoPlayerPlatformsWith({dynamic options}) {
     // prefer hardware decoders
     if (options is Map<String, dynamic>) {
       final platforms = options['platforms'];
@@ -224,6 +223,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     player.setProperty('avio.protocol_whitelist',
         'file,rtmp,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data,concatf,concat,subfile');
     player.setProperty('avformat.rtsp_transport', 'tcp');
+
     _playerOpts?.forEach((key, value) {
       player.setProperty(key, value);
     });
@@ -242,7 +242,6 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       }
     }
 
-
     if (dataSource.httpHeaders.isNotEmpty) {
       String headers = '';
       dataSource.httpHeaders.forEach((key, value) {
@@ -251,6 +250,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       player.setProperty('avio.headers', headers);
     }
     player.media = uri!;
+
     player.prepare(); // required!
 // FIXME: pending events will be processed after texture returned, but no events before prepared
     final tex = await player.updateTexture(
@@ -260,6 +260,12 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
         fit: _fitMaxSize);
     _players[tex] = player;
     return tex;
+  }
+
+  List<SubtitleStreamInfo>? getSubtitle(int textureId) {
+    final player = _players[textureId];
+
+    return player?.mediaInfo.subtitle;
   }
 
   Future<void> setLooping(int textureId, bool looping) async {
@@ -294,66 +300,71 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   /// least one [MdkTrackSelection] for a specific type, the auto track selection will
   /// be added to this list with that type.
   Future<List<MdkTrackSelection>> getVideoTracks(
-    int textureId, ) async {
-   final player = _players[textureId];
-   final videoTracks = player?.mediaInfo.video ??[];
+    int textureId,
+  ) async {
+    final player = _players[textureId];
+    final videoTracks = player?.mediaInfo.video ?? [];
+    final List<MdkTrackSelection> trackSelections = [];
 
-   return videoTracks.map((e) {
-
+    for (int i = 0; i < videoTracks.length; i++) {
+      final e = videoTracks[i];
       int bitrate = e.codec.bitRate;
-     final int width = e.codec.width;
-     final int height = e.codec.height;
-     const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+      final int width = e.codec.width;
+      final int height = e.codec.height;
+      const trackSelectionNameResource = mdk.TrackSelectionNameResource();
 
-     if(bitrate <= 0){
-       bitrate = e.metadata.containsKey('bitrate') ? (e.metadata['bitrate'] as int?)??-1 : -1;
-     }
+      if (bitrate <= 0) {
+        bitrate = e.metadata.containsKey('bitrate')
+            ? (e.metadata['bitrate'] as int?) ?? -1
+            : -1;
+      }
 
-     final trackSelectionName = _joinWithSeparator([
-       _buildVideoQualityOrResolutionString(
-           bitrate, width, height, trackSelectionNameResource),
-     ], trackSelectionNameResource.trackItemListSeparator);
-     return  MdkTrackSelection(
-       trackId: e.index,
-       trackType: MdkTrackSelectionType.video,
-       trackName: trackSelectionName.isEmpty
-           ? trackSelectionNameResource.trackUnknown
-           : trackSelectionName,
-       isSelected: false,
-       size: width == -1 || height == -1
-           ? null
-           : Size(width.toDouble(), height.toDouble()),
-       bitrate: bitrate == -1 ? null : bitrate,
-     );
-   }).toList();
+      final trackSelectionName = _joinWithSeparator([
+        _buildVideoQualityOrResolutionString(
+            bitrate, width, height, trackSelectionNameResource),
+      ], trackSelectionNameResource.trackItemListSeparator);
 
+      trackSelections.add(MdkTrackSelection(
+        trackId: i,
+        trackType: MdkTrackSelectionType.video,
+        trackName: trackSelectionName.isEmpty
+            ? trackSelectionNameResource.trackUnknown
+            : trackSelectionName,
+        isSelected: false,
+        size: width == -1 || height == -1
+            ? null
+            : Size(width.toDouble(), height.toDouble()),
+        bitrate: bitrate == -1 ? null : bitrate,
+      ));
+    }
+    return trackSelections;
   }
 
-
-
   Future<List<MdkTrackSelection>> getAudioTracks(
-    int textureId,) async {
-   final player = _players[textureId];
-   final audioTracks = player?.mediaInfo.audio ??[];
+    int textureId,
+  ) async {
+    final player = _players[textureId];
+    final audioTracks = player?.mediaInfo.audio ?? [];
 
+    const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+    final List<MdkTrackSelection> trackSelections = [];
 
-   const trackSelectionNameResource = mdk.TrackSelectionNameResource();
-    return audioTracks.map((e) {
+    for (int i = 0; i < audioTracks.length; i++) {
+      final e = audioTracks[i];
 
-      final String language = e.metadata['language'] ??'';
-      final String label = e.metadata['label'] ??'';
+      final String language = e.metadata['language'] ?? '';
+      final String label = e.metadata['label'] ?? '';
       final int channelCount = e.codec.channels;
       int bitrate = e.codec.bitRate;
 
       final trackSelectionName = _joinWithSeparator([
         _buildLanguageOrLabelString(
-            language , label, trackSelectionNameResource),
-        _buildAudioChannelString(
-            channelCount, trackSelectionNameResource),
+            language, label, trackSelectionNameResource),
+        _buildAudioChannelString(channelCount, trackSelectionNameResource),
         _buildAvgBitrateString(bitrate, trackSelectionNameResource),
       ], trackSelectionNameResource.trackItemListSeparator);
-      return MdkTrackSelection(
-        trackId: e.index,
+      trackSelections.add(MdkTrackSelection(
+        trackId: i,
         trackType: MdkTrackSelectionType.audio,
         trackName: trackSelectionName.isEmpty
             ? trackSelectionNameResource.trackUnknown
@@ -363,76 +374,75 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
         label: label.isEmpty ? null : label,
         channel: _toChannelType(channelCount),
         bitrate: bitrate == -1 ? null : bitrate,
-      );}
-    ).toList();
+      ));
+    }
+    return trackSelections;
   }
 
-
   Future<List<MdkTrackSelection>> getSubtitleTracks(
-    int textureId,) async {
-   final player = _players[textureId];
-   final subtitleTracks = player?.mediaInfo.subtitle ??[];
+    int textureId,
+  ) async {
+    final player = _players[textureId];
+    final subtitleTracks = player?.mediaInfo.subtitle ?? [];
 
-   const trackSelectionNameResource = mdk.TrackSelectionNameResource();
-   return subtitleTracks.map((e) {
-     final String language = e.metadata['language'] ??'';
-     final String label = e.metadata['label']??'';
-     final trackSelectionName = _joinWithSeparator([
-       _buildLanguageOrLabelString(
-           language , label, trackSelectionNameResource),
-     ], trackSelectionNameResource.trackItemListSeparator);
-     return MdkTrackSelection(
-       trackId: e.index,
-       trackType: MdkTrackSelectionType.subtitle,
-       trackName: trackSelectionName.isEmpty
-           ? trackSelectionNameResource.trackUnknown
-           : trackSelectionName,
-       isSelected: false,
-       language: language.isEmpty ? null : language,
-       label: label.isEmpty ? null : label,
-     );}
-   ).toList();
+    const trackSelectionNameResource = mdk.TrackSelectionNameResource();
+
+    final List<MdkTrackSelection> trackSelections = [];
+
+    for (int i = 0; i < subtitleTracks.length; i++) {
+      final e = subtitleTracks[i];
+      final String language = e.metadata['language'] ?? '';
+      final String label = e.metadata['label'] ?? '';
+      final trackSelectionName = _joinWithSeparator([
+        _buildLanguageOrLabelString(
+            language, label, trackSelectionNameResource),
+      ], trackSelectionNameResource.trackItemListSeparator);
+      trackSelections.add(MdkTrackSelection(
+        trackId: i,
+        trackType: MdkTrackSelectionType.subtitle,
+        trackName: trackSelectionName.isEmpty
+            ? trackSelectionNameResource.trackUnknown
+            : trackSelectionName,
+        isSelected: false,
+        language: language.isEmpty ? null : language,
+        label: label.isEmpty ? null : label,
+      ));
+    }
+    return trackSelections;
   }
 
   /// Gets the selected video track selection.
   /// Returns -1 if no video track is selected.
-  int getActiveVideoTrack(int textureId){
+  int getActiveVideoTrack(int textureId) {
     final player = _players[textureId];
     return player?.activeVideoTracks[0] ?? -1;
   }
 
   /// Gets the selected audio track selection.
   /// Returns -1 if no audio track is selected.
-  int getActiveAudioTrack(int textureId){
+  int getActiveAudioTrack(int textureId) {
     final player = _players[textureId];
     return player?.activeAudioTracks[0] ?? -1;
   }
 
   /// Gets the selected subtitle track selection.
   /// Returns -1 if no subtitle track is selected.
-  int getActiveSubtitleTrack(int textureId){
+  int getActiveSubtitleTrack(int textureId) {
     final player = _players[textureId];
     return player?.activeSubtitleTracks[0] ?? -1;
   }
 
   /// Sets the selected video track selection.
-  void setVideoTrack(
-      int textureId,
-      int trackId
-      ){
-    final player=_players[textureId];
+  void setVideoTrack(int textureId, int trackId) {
+    final player = _players[textureId];
     player?.setActiveTracks(MediaType.video, [trackId]);
   }
 
   /// Sets the selected audio track selection.
-  void setAudioTrack(
-      int textureId,
-      int trackId
-      ){
-    final player=_players[textureId];
+  void setAudioTrack(int textureId, int trackId) {
+    final player = _players[textureId];
     player?.setActiveTracks(MediaType.audio, [trackId]);
   }
-
 
   void updateDataSource(int textureId, DataSource dataSource) {
     String? uri;
@@ -455,23 +465,19 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       player.media = uri!;
       player.prepare();
       player.updateTexture(
-          width: _maxWidth,
-          height: _maxHeight,
-          tunnel: _tunnel,
-          fit: _fitMaxSize,
+        width: _maxWidth,
+        height: _maxHeight,
+        tunnel: _tunnel,
+        fit: _fitMaxSize,
       );
     }
   }
 
   ///Sets the subtitle track selection.
-  void setSubtitleTrack(
-      int textureId,
-      int trackId
-      ){
-    final player=_players[textureId];
+  void setSubtitleTrack(int textureId, int trackId) {
+    final player = _players[textureId];
     player?.setActiveTracks(MediaType.subtitle, [trackId]);
   }
-
 
   Future<Duration> getPosition(int textureId) async {
     final player = _players[textureId];
@@ -524,7 +530,6 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     return asset;
   }
 
-
   TrackSelectionChannelType? _toChannelType(int channelCount) {
     switch (channelCount) {
       case 1:
@@ -537,11 +542,11 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   }
 
   String _buildVideoQualityOrResolutionString(
-      int bitrate,
-      int width,
-      int height,
-      TrackSelectionNameResource trackSelectionNameResource,
-      ) {
+    int bitrate,
+    int width,
+    int height,
+    TrackSelectionNameResource trackSelectionNameResource,
+  ) {
     const int bitrate1080p = 2800000;
     const int bitrate720p = 1600000;
     const int bitrate480p = 700000;
@@ -595,16 +600,19 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   }
 
   String _buildLanguageOrLabelString(
-      String language,
-      String label,
-      TrackSelectionNameResource trackSelectionNameResource,
-      ) {
+    String language,
+    String label,
+    TrackSelectionNameResource trackSelectionNameResource,
+  ) {
     String languageAndRole = _joinWithSeparator(
-      [language,],
+      [
+        language,
+      ],
       trackSelectionNameResource.trackItemListSeparator,
     );
     return languageAndRole.isEmpty ? label : languageAndRole;
   }
+
   String _buildAudioChannelString(
       int channelCount, TrackSelectionNameResource trackSelectionNameResource) {
     if (channelCount == -1) {
@@ -631,5 +639,4 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     }
     return jointNames;
   }
-
 }

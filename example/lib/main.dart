@@ -9,8 +9,17 @@
 
 import 'package:flutter/material.dart';
 import 'package:fvp/mdk.dart';
+import 'package:intl/intl.dart';
+import 'package:logging/logging.dart';
 
 void main() {
+  Logger.root.level = Level.ALL;
+  final df = DateFormat("HH:mm:ss.SSS");
+  Logger.root.onRecord.listen((record) {
+    print(
+        '${record.loggerName}.${record.level.name}: ${df.format(record.time)}: ${record.message}');
+  });
+
   runApp(
     MaterialApp(
       home: _App(),
@@ -48,59 +57,15 @@ class _App extends StatelessWidget {
                 icon: Icon(Icons.cloud),
                 text: 'Remote',
               ),
-              Tab(icon: Icon(Icons.insert_drive_file), text: 'Asset'),
-              Tab(icon: Icon(Icons.list), text: 'List example'),
             ],
           ),
         ),
         body: TabBarView(
           children: <Widget>[
             _BumbleBeeRemoteVideo(),
-            _ButterFlyAssetVideo(),
-            _ButterFlyAssetVideoInList(),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ButterFlyAssetVideoInList extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: <Widget>[
-        const _ExampleCard(title: 'Item a'),
-        const _ExampleCard(title: 'Item b'),
-        const _ExampleCard(title: 'Item c'),
-        const _ExampleCard(title: 'Item d'),
-        const _ExampleCard(title: 'Item e'),
-        const _ExampleCard(title: 'Item f'),
-        const _ExampleCard(title: 'Item g'),
-        Card(
-            child: Column(children: <Widget>[
-          Column(
-            children: <Widget>[
-              const ListTile(
-                leading: Icon(Icons.cake),
-                title: Text('Video video'),
-              ),
-              Stack(
-                  alignment: FractionalOffset.bottomRight +
-                      const FractionalOffset(-0.1, -0.1),
-                  children: <Widget>[
-                    _ButterFlyAssetVideo(),
-                    Image.asset('assets/flutter-mark-square-64.png'),
-                  ]),
-            ],
-          ),
-        ])),
-        const _ExampleCard(title: 'Item h'),
-        const _ExampleCard(title: 'Item i'),
-        const _ExampleCard(title: 'Item j'),
-        const _ExampleCard(title: 'Item k'),
-        const _ExampleCard(title: 'Item l'),
-      ],
     );
   }
 }
@@ -121,77 +86,25 @@ class _ExampleCard extends StatelessWidget {
             leading: const Icon(Icons.airline_seat_flat_angled),
             title: Text(title),
           ),
-          ButtonBar(
-            children: <Widget>[
-              TextButton(
-                child: const Text('BUY TICKETS'),
-                onPressed: () {
-                  /* ... */
-                },
-              ),
-              TextButton(
-                child: const Text('SELL TICKETS'),
-                onPressed: () {
-                  /* ... */
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ButterFlyAssetVideo extends StatefulWidget {
-  @override
-  _ButterFlyAssetVideoState createState() => _ButterFlyAssetVideoState();
-}
-
-class _ButterFlyAssetVideoState extends State<_ButterFlyAssetVideo> {
-  late MdkVideoPlayerController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = MdkVideoPlayerController.network(
-        'https://cdn.theoplayer.com/video/big_buck_bunny/stream-3-3000000/index.m3u8');
-
-    _controller.addListener(() {
-      setState(() {});
-    });
-    _controller.setLooping(true);
-    _controller.initialize().then((_) => setState(() {}));
-    _controller.play();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.only(top: 20.0),
-          ),
-          const Text('With assets mp4'),
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: AspectRatio(
-              aspectRatio: _controller.value.aspectRatio,
-              child: Stack(
-                alignment: Alignment.bottomCenter,
-                children: <Widget>[
-                  MdkVideoPlayer(_controller),
-                  _ControlsOverlay(controller: _controller),
-                  VideoProgressIndicator(_controller, allowScrubbing: true),
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 8.0,
+              children: <Widget>[
+                TextButton(
+                  child: const Text('BUY TICKETS'),
+                  onPressed: () {
+                    /* ... */
+                  },
+                ),
+                TextButton(
+                  child: const Text('SELL TICKETS'),
+                  onPressed: () {
+                    /* ... */
+                  },
+                ),
+              ],
             ),
           ),
         ],
@@ -215,18 +128,28 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
         fileContents); // For vtt files, use WebVTTCaptionFile
   }
 
+  String subtitle = "Subtitle";
+
   @override
   void initState() {
     super.initState();
-    _controller = MdkVideoPlayerController.network(
-      'https://flutter.github.io/assets-for-api-docs/assets/videos/bee.mp4',
-      closedCaptionFile: _loadCaptions(),
+
+    //https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4
+    //http://sample.vodobox.com/planete_interdite/planete_interdite_alternate.m3u8
+    // 'https://mirror.selfnet.de/CCC/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4'
+    _controller = MdkVideoPlayerController.networkUrl(
+      Uri.parse(
+          'https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4'),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
 
     _controller.addListener(() {
-      setState(() {});
+      // print('video listener :${_controller.value}');
+      // final cues = _controller.value.subtitle;
+      // subtitle = (cues.isEmpty ? '' : cues.join("/n"));
+      // setState(() {});
     });
+
     _controller.setLooping(true);
     _controller.initialize();
   }
@@ -252,13 +175,14 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
                 alignment: Alignment.bottomCenter,
                 children: <Widget>[
                   MdkVideoPlayer(_controller),
-                  ClosedCaption(text: _controller.value.caption.text),
+                  // ClosedCaption(text: subtitle),
                   _ControlsOverlay(controller: _controller),
                   VideoProgressIndicator(_controller, allowScrubbing: true),
                 ],
               ),
             ),
           ),
+          _GetTrackSelectionButton(controller: _controller),
         ],
       ),
     );
@@ -296,22 +220,25 @@ class _ControlsOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: <Widget>[
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 50),
-          reverseDuration: const Duration(milliseconds: 200),
-          child: controller.value.isPlaying
-              ? const SizedBox.shrink()
-              : Container(
-                  color: Colors.black26,
-                  child: const Center(
-                    child: Icon(
-                      Icons.play_arrow,
-                      color: Colors.white,
-                      size: 100.0,
-                      semanticLabel: 'Play',
+        ListenableBuilder(
+          listenable: controller,
+          builder: (cxt, _) => AnimatedSwitcher(
+            duration: const Duration(milliseconds: 50),
+            reverseDuration: const Duration(milliseconds: 200),
+            child: controller.value.isPlaying
+                ? const SizedBox.shrink()
+                : Container(
+                    color: Colors.black26,
+                    child: const Center(
+                      child: Icon(
+                        Icons.play_arrow,
+                        color: Colors.white,
+                        size: 100.0,
+                        semanticLabel: 'Play',
+                      ),
                     ),
                   ),
-                ),
+          ),
         ),
         GestureDetector(
           onTap: () {
@@ -387,35 +314,31 @@ class _PlayerVideoAndPopPage extends StatefulWidget {
 }
 
 class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
-  late MdkVideoPlayerController _videoPlayerController;
+  late MdkVideoPlayerController _MdkVideoPlayerController;
   bool startedPlaying = false;
-
-  void _onVideoControllerValueUpdated() {
-    if (startedPlaying && !_videoPlayerController.value.isPlaying) {
-      _videoPlayerController.removeListener(
-          _onVideoControllerValueUpdated); // https://github.com/flutter/flutter/issues/122690
-      Navigator.pop(context);
-    }
-  }
 
   @override
   void initState() {
     super.initState();
 
-    _videoPlayerController = MdkVideoPlayerController.network(
-        'https://ks3-cn-beijing.ksyun.com/ksplayer/h265/mp4_resource/jinjie_265.mp4');
-    _videoPlayerController.addListener(_onVideoControllerValueUpdated);
+    _MdkVideoPlayerController =
+        MdkVideoPlayerController.asset('assets/Butterfly-209.mp4');
+    _MdkVideoPlayerController.addListener(() {
+      if (startedPlaying && !_MdkVideoPlayerController.value.isPlaying) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   @override
   void dispose() {
-    _videoPlayerController.dispose();
+    _MdkVideoPlayerController.dispose();
     super.dispose();
   }
 
   Future<bool> started() async {
-    await _videoPlayerController.initialize();
-    await _videoPlayerController.play();
+    await _MdkVideoPlayerController.initialize();
+    await _MdkVideoPlayerController.play();
     startedPlaying = true;
     return true;
   }
@@ -423,19 +346,187 @@ class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
   @override
   Widget build(BuildContext context) {
     return Material(
+      elevation: 0,
       child: Center(
         child: FutureBuilder<bool>(
           future: started(),
           builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
             if (snapshot.data ?? false) {
               return AspectRatio(
-                aspectRatio: _videoPlayerController.value.aspectRatio,
-                child: MdkVideoPlayer(_videoPlayerController),
+                aspectRatio: _MdkVideoPlayerController.value.aspectRatio,
+                child: MdkVideoPlayer(_MdkVideoPlayerController),
               );
             } else {
               return const Text('waiting for video to load');
             }
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _GetTrackSelectionButton extends StatelessWidget {
+  _GetTrackSelectionButton({required this.controller});
+
+  final MdkVideoPlayerController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.only(top: 20.0),
+      child: MaterialButton(
+          child: Text('Get Track Selection'),
+          onPressed: () async {
+            final videoTracks = await controller.getVideoTracks();
+            final audioTracks = await controller.getAudioTracks();
+            final subtitleTracks = await controller.getSubtitleTracks();
+
+            final selectedVideoTrack = controller.getActiveVideoTrack();
+            final selectedAudioTrack = controller.getActiveAudioTrack();
+            final selectedSubtitleTrack = controller.getActiveSubtitleTrack();
+
+            print('tracks :$subtitleTracks active :$selectedSubtitleTrack');
+            // ignore: use_build_context_synchronously
+            showDialog<MdkTrackSelection>(
+              context: context,
+              builder: (_) => _TrackSelectionDialog(
+                videoTrackSelections: videoTracks,
+                audioTrackSelections: audioTracks,
+                textTrackSelections: subtitleTracks,
+                selectedVideoTrack: selectedVideoTrack,
+                selectedAudioTrack: selectedAudioTrack,
+                selectedSubtitleTrack: selectedSubtitleTrack,
+                controller: controller,
+              ),
+            );
+          }),
+    );
+  }
+}
+
+class _TrackSelectionDialog extends StatelessWidget {
+  const _TrackSelectionDialog({
+    required this.videoTrackSelections,
+    required this.audioTrackSelections,
+    required this.textTrackSelections,
+    required this.controller,
+    required this.selectedVideoTrack,
+    required this.selectedAudioTrack,
+    required this.selectedSubtitleTrack,
+  });
+  final MdkVideoPlayerController controller;
+  final List<MdkTrackSelection> videoTrackSelections;
+  final List<MdkTrackSelection> audioTrackSelections;
+  final List<MdkTrackSelection> textTrackSelections;
+  final int selectedVideoTrack;
+  final int selectedAudioTrack;
+  final int selectedSubtitleTrack;
+
+  int _tabBarLength() {
+    int length = 0;
+    if (videoTrackSelections.isNotEmpty) length += 1;
+    if (audioTrackSelections.isNotEmpty) length += 1;
+    if (textTrackSelections.isNotEmpty) length += 1;
+    return length;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      initialIndex: 0,
+      length: _tabBarLength(),
+      child: AlertDialog(
+        titlePadding: EdgeInsets.all(0),
+        contentPadding: EdgeInsets.all(0),
+        title: TabBar(
+          labelColor: Colors.black,
+          tabs: [
+            if (videoTrackSelections.isNotEmpty) Tab(text: 'Video'),
+            if (audioTrackSelections.isNotEmpty) Tab(text: 'Audio'),
+            if (textTrackSelections.isNotEmpty) Tab(text: 'Text'),
+          ],
+        ),
+        content: Container(
+          height: 200,
+          width: 200,
+          child: TabBarView(
+            children: [
+              if (videoTrackSelections.isNotEmpty)
+                SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: videoTrackSelections
+                        .map((track) => RadioListTile<MdkTrackSelection>(
+                              title: Text(track.trackName),
+                              value: track,
+                              groupValue: videoTrackSelections
+                                  .where((track) =>
+                                      track.trackId == selectedVideoTrack)
+                                  .firstOrNull,
+                              selected: track.trackId == selectedVideoTrack,
+                              onChanged: (MdkTrackSelection? track) {
+                                if (track == null) {
+                                  return;
+                                }
+                                controller.setVideoTrack(track.trackId);
+                              },
+                            ))
+                        .toList(),
+                  ),
+                ),
+              if (audioTrackSelections.isNotEmpty)
+                SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: audioTrackSelections
+                        .map((track) => RadioListTile<MdkTrackSelection>(
+                              title: Text(track.trackName),
+                              value: track,
+                              groupValue: audioTrackSelections
+                                  .where((track) =>
+                                      track.trackId == selectedAudioTrack)
+                                  .firstOrNull,
+                              selected: track.trackId == selectedAudioTrack,
+                              onChanged: (MdkTrackSelection? track) {
+                                if (track == null) {
+                                  return;
+                                }
+                                if (!track.isSelected) {
+                                  controller.setAudioTrack(track.trackId);
+                                }
+                              },
+                            ))
+                        .toList(),
+                  ),
+                ),
+              if (textTrackSelections.isNotEmpty)
+                SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: textTrackSelections
+                        .map((track) => RadioListTile<MdkTrackSelection>(
+                              title: Text(track.trackName),
+                              value: track,
+                              groupValue: textTrackSelections
+                                  .where((track) =>
+                                      track.trackId == selectedSubtitleTrack)
+                                  .firstOrNull,
+                              selected: track.trackId == selectedSubtitleTrack,
+                              onChanged: (MdkTrackSelection? track) {
+                                if (track == null) {
+                                  return;
+                                }
+                                if (!track.isSelected) {
+                                  controller.setSubtitleTrack(track.trackId);
+                                }
+                              },
+                            ))
+                        .toList(),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
