@@ -11,8 +11,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fvp/src/video_player_mdk.dart';
+import 'package:logging/logging.dart';
 
 import '../mdk.dart';
+
+final _log = Logger('fvp player');
 
 MdkVideoPlayerPlatform? _lastVideoPlayerPlatform;
 
@@ -453,6 +456,7 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
           playerOpts: playerOpts,
           platforms: platforms,
         ), onCancel: () {
+      _log.fine('initialize canceled');
       dispose();
     });
   }
@@ -541,6 +545,8 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
     Map<String, String>? playerOpts,
     List<String>? platforms,
   }) async {
+    _log.fine('initialize');
+
     _creatingOperation?.cancel();
     _creatingOperation = CancelableOperation.fromFuture(
         _createTexture(
@@ -555,6 +561,7 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
           playerOpts: playerOpts,
           platforms: platforms,
         ), onCancel: () async {
+      _log.fine('createTexture canceled');
       await _videoPlayerPlatform.dispose(_textureId);
     });
 
@@ -575,6 +582,8 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
             errorDescription: null,
             isCompleted: false,
           );
+          _log.fine('initialization completed');
+
           initializingCompleter.complete(null);
           _applyLooping();
           _applyVolume();
@@ -618,6 +627,7 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
       final PlatformException e = obj as PlatformException;
       value = MdkVideoPlayerValue.erroneous(e.message!);
       _timer?.cancel();
+      _log.fine('initialization error $obj');
       if (!initializingCompleter.isCompleted) {
         initializingCompleter.completeError(obj);
       }
@@ -628,6 +638,8 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
         .listen(eventListener, onError: errorListener);
 
     if (_textureId < 0) {
+      _log.fine('initialization error media open error');
+
       dispose();
 
       errorListener(PlatformException(
@@ -642,24 +654,20 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   @override
   Future<void> dispose() async {
     try {
-      if (_isDisposed) {
-        return;
-      }
-
+      _log.fine('dispose');
       if (_creatingOperation?.isCompleted == true) {
         await _videoPlayerPlatform.dispose(_textureId);
       } else {
         _creatingOperation?.cancel();
       }
-      if (!_isDisposed) {
-        _isDisposed = true;
-        _timer?.cancel();
-        await _eventSubscription?.cancel();
-      }
+      _timer?.cancel();
+      await _eventSubscription?.cancel();
       _lifeCycleObserver?.dispose();
       _isDisposed = true;
       super.dispose();
-    } catch ($) {}
+    } catch (e) {
+      _log.fine('dispose error: $e');
+    }
   }
 
   /// Starts playing the video.
