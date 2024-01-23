@@ -47,7 +47,7 @@ target_include_directories(${PLUGIN_NAME} INTERFACE
 target_compile_definitions(fvp_plugin PUBLIC DART_SHARED_LIB)
 
 
-set(MDK_SDK_URL "https://sourceforge.net/projects/mdk-sdk/files/nightly/mdk-sdk-android.7z")
+set(MDK_SDK_URL "https://sourceforge.net/projects/mdk-sdk/files/mdk-sdk-android.7z")
 set(MDK_SDK_SAVE ${CMAKE_CURRENT_SOURCE_DIR}/mdk-sdk-android.7z)
 if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/mdk-sdk/lib/cmake/FindMDK.cmake)
   if(NOT EXISTS ${MDK_SDK_SAVE})
