@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 
+import 'package:async/async.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -379,7 +380,7 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   ClosedCaptionFile? _closedCaptionFile;
   Timer? _timer;
   bool _isDisposed = false;
-  Completer<void>? _creatingCompleter;
+  CancelableOperation<void>? _creatingOperation;
   StreamSubscription<dynamic>? _eventSubscription;
   _VideoAppLifeCycleObserver? _lifeCycleObserver;
 
@@ -392,6 +393,9 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   /// on the plugin.
   @visibleForTesting
   int get textureId => _textureId;
+
+  CancelableOperation? _cancelableInitializationOperation;
+  Completer<void>? initializingCompleter;
 
   /// Attempts to open the given [dataSource] and load metadata about the video.
   /// [options] can be
@@ -422,7 +426,38 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
   ///   }});
   /// ```
   ///
+  ///
   Future<void> initialize({
+    int? maxWidth,
+    int? maxHeight,
+    bool? fitMaxSize,
+    bool? tunnel,
+    int lowLatency = 0,
+    bool fastSeek = false,
+    List<String>? decoders,
+    Map<String, Object>? globalOpts,
+    Map<String, String>? playerOpts,
+    List<String>? platforms,
+  }) async {
+    _cancelableInitializationOperation?.cancel();
+    _cancelableInitializationOperation = CancelableOperation.fromFuture(
+        _initialize(
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
+          fitMaxSize: fitMaxSize,
+          tunnel: tunnel,
+          lowLatency: lowLatency,
+          fastSeek: fastSeek,
+          decoders: decoders,
+          globalOpts: globalOpts,
+          playerOpts: playerOpts,
+          platforms: platforms,
+        ), onCancel: () {
+      dispose();
+    });
+  }
+
+  Future<void> _createTexture({
     int? maxWidth,
     int? maxHeight,
     bool? fitMaxSize,
@@ -440,7 +475,6 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
       _lifeCycleObserver = _VideoAppLifeCycleObserver(this);
     }
     _lifeCycleObserver?.initialize();
-    _creatingCompleter = Completer<void>();
 
     late DataSource dataSourceDescription;
     switch (dataSourceType) {
@@ -493,15 +527,44 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
 
     _textureId = (await _videoPlayerPlatform.create(dataSourceDescription)) ??
         kUninitializedTextureId;
+  }
 
-    _creatingCompleter!.complete(null);
-    final Completer<void> initializingCompleter = Completer<void>();
+  Future<void> _initialize({
+    int? maxWidth,
+    int? maxHeight,
+    bool? fitMaxSize,
+    bool? tunnel,
+    int lowLatency = 0,
+    bool fastSeek = false,
+    List<String>? decoders,
+    Map<String, Object>? globalOpts,
+    Map<String, String>? playerOpts,
+    List<String>? platforms,
+  }) async {
+    _creatingOperation?.cancel();
+    _creatingOperation = CancelableOperation.fromFuture(
+        _createTexture(
+          maxWidth: maxWidth,
+          maxHeight: maxHeight,
+          fitMaxSize: fitMaxSize,
+          tunnel: tunnel,
+          lowLatency: lowLatency,
+          fastSeek: fastSeek,
+          decoders: decoders,
+          globalOpts: globalOpts,
+          playerOpts: playerOpts,
+          platforms: platforms,
+        ), onCancel: () async {
+      await _videoPlayerPlatform.dispose(_textureId);
+    });
 
+    await _creatingOperation!.valueOrCancellation();
+
+    final initializingCompleter = Completer<void>();
     void eventListener(VideoEvent event) {
       if (_isDisposed) {
         return;
       }
-
       switch (event.eventType) {
         case VideoEventType.initialized:
           value = value.copyWith(
@@ -572,6 +635,7 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
         message: 'invalid or unsupported media',
       ));
     }
+
     return initializingCompleter.future;
   }
 
@@ -581,16 +645,18 @@ class MdkVideoPlayerController extends ValueNotifier<MdkVideoPlayerValue> {
       if (_isDisposed) {
         return;
       }
-      if (_creatingCompleter != null) {
-        await _creatingCompleter!.future;
-        if (!_isDisposed) {
-          _isDisposed = true;
-          _timer?.cancel();
-          await _eventSubscription?.cancel();
-          await _videoPlayerPlatform.dispose(_textureId);
-        }
-        _lifeCycleObserver?.dispose();
+
+      if (_creatingOperation?.isCompleted == true) {
+        await _videoPlayerPlatform.dispose(_textureId);
+      } else {
+        _creatingOperation?.cancel();
       }
+      if (!_isDisposed) {
+        _isDisposed = true;
+        _timer?.cancel();
+        await _eventSubscription?.cancel();
+      }
+      _lifeCycleObserver?.dispose();
       _isDisposed = true;
       super.dispose();
     } catch ($) {}

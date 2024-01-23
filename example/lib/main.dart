@@ -9,15 +9,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:fvp/mdk.dart';
-import 'package:intl/intl.dart';
 import 'package:logging/logging.dart';
 
 void main() {
   Logger.root.level = Level.ALL;
-  final df = DateFormat("HH:mm:ss.SSS");
   Logger.root.onRecord.listen((record) {
-    print(
-        '${record.loggerName}.${record.level.name}: ${df.format(record.time)}: ${record.message}');
+    print('${record.loggerName}.${record.level.name}: ${record.message}');
   });
 
   runApp(
@@ -36,20 +33,6 @@ class _App extends StatelessWidget {
         key: const ValueKey<String>('home_page'),
         appBar: AppBar(
           title: const Text('Video player example'),
-          actions: <Widget>[
-            IconButton(
-              key: const ValueKey<String>('push_tab'),
-              icon: const Icon(Icons.navigation),
-              onPressed: () {
-                Navigator.push<_PlayerVideoAndPopPage>(
-                  context,
-                  MaterialPageRoute<_PlayerVideoAndPopPage>(
-                    builder: (BuildContext context) => _PlayerVideoAndPopPage(),
-                  ),
-                );
-              },
-            )
-          ],
           bottom: const TabBar(
             isScrollable: true,
             tabs: <Widget>[
@@ -65,49 +48,6 @@ class _App extends StatelessWidget {
             _BumbleBeeRemoteVideo(),
           ],
         ),
-      ),
-    );
-  }
-}
-
-/// A filler card to show the video in a list of scrolling contents.
-class _ExampleCard extends StatelessWidget {
-  const _ExampleCard({required this.title});
-
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: <Widget>[
-          ListTile(
-            leading: const Icon(Icons.airline_seat_flat_angled),
-            title: Text(title),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: OverflowBar(
-              alignment: MainAxisAlignment.end,
-              spacing: 8.0,
-              children: <Widget>[
-                TextButton(
-                  child: const Text('BUY TICKETS'),
-                  onPressed: () {
-                    /* ... */
-                  },
-                ),
-                TextButton(
-                  child: const Text('SELL TICKETS'),
-                  onPressed: () {
-                    /* ... */
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -182,6 +122,27 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
               ),
             ),
           ),
+          IconButton(
+              onPressed: () async {
+                await _controller.dispose();
+                _controller = MdkVideoPlayerController.networkUrl(
+                  Uri.parse(
+                      'https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4'),
+                  videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+                );
+
+                _controller.addListener(() {
+                  // print('video listener :${_controller.value}');
+                  // final cues = _controller.value.subtitle;
+                  // subtitle = (cues.isEmpty ? '' : cues.join("/n"));
+                  // setState(() {});
+                });
+
+                _controller.setLooping(true);
+                _controller.initialize();
+                setState(() {});
+              },
+              icon: Icon(Icons.next_plan_sharp)),
           _GetTrackSelectionButton(controller: _controller),
         ],
       ),
@@ -304,64 +265,6 @@ class _ControlsOverlay extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _PlayerVideoAndPopPage extends StatefulWidget {
-  @override
-  _PlayerVideoAndPopPageState createState() => _PlayerVideoAndPopPageState();
-}
-
-class _PlayerVideoAndPopPageState extends State<_PlayerVideoAndPopPage> {
-  late MdkVideoPlayerController _MdkVideoPlayerController;
-  bool startedPlaying = false;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _MdkVideoPlayerController =
-        MdkVideoPlayerController.asset('assets/Butterfly-209.mp4');
-    _MdkVideoPlayerController.addListener(() {
-      if (startedPlaying && !_MdkVideoPlayerController.value.isPlaying) {
-        Navigator.pop(context);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _MdkVideoPlayerController.dispose();
-    super.dispose();
-  }
-
-  Future<bool> started() async {
-    await _MdkVideoPlayerController.initialize();
-    await _MdkVideoPlayerController.play();
-    startedPlaying = true;
-    return true;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      elevation: 0,
-      child: Center(
-        child: FutureBuilder<bool>(
-          future: started(),
-          builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
-            if (snapshot.data ?? false) {
-              return AspectRatio(
-                aspectRatio: _MdkVideoPlayerController.value.aspectRatio,
-                child: MdkVideoPlayer(_MdkVideoPlayerController),
-              );
-            } else {
-              return const Text('waiting for video to load');
-            }
-          },
-        ),
-      ),
     );
   }
 }
