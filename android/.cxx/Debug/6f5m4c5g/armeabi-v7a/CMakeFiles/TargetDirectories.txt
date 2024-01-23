@@ -1,3 +1,0 @@
-E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/armeabi-v7a/CMakeFiles/fvp_plugin.dir
-E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/armeabi-v7a/CMakeFiles/edit_cache.dir
-E:/Sourcaya/Apps/fvp/android/.cxx/Debug/6f5m4c5g/armeabi-v7a/CMakeFiles/rebuild_cache.dir
