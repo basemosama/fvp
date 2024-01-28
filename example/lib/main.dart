@@ -79,7 +79,8 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     // 'https://mirror.selfnet.de/CCC/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4'
     _controller = MdkVideoPlayerController.networkUrl(
       Uri.parse(
-          'https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4'),
+        'https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4',
+      ),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
 

@@ -4,9 +4,8 @@
 // found in the LICENSE file.
 
 export 'src/global.dart';
+export 'src/mdk_video_player.dart';
 export 'src/media_info.dart';
 export 'src/player.dart';
-export 'src/video_player_options.dart';
-export 'src/mdk_video_player.dart';
 export 'src/video_player/closed_caption_file.dart';
-
+export 'src/video_player_options.dart';
