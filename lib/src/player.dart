@@ -266,6 +266,8 @@ class Player {
   set activeSubtitleTracks(List<int> value) =>
       setActiveTracks(MediaType.subtitle, value);
 
+
+
   /// Active subtitle tracks set by user
   List<int> get activeSubtitleTracks => _activeST;
 
@@ -366,6 +368,7 @@ class Player {
         _player.ref.object, type.rawValue, u8p.cast());
     u8p.free();
   }
+
 
   /// Set active tracks of [type]. Other tracks of [type] will be disabled.
   /// https://github.com/wang-bin/mdk-sdk/wiki/Player-APIs#void-setactivetracksmediatype-type-const-stdsetint-tracks
