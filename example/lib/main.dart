@@ -61,15 +61,6 @@ class _BumbleBeeRemoteVideo extends StatefulWidget {
 class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
   late MdkVideoPlayerController _controller;
 
-  Future<ClosedCaptionFile> _loadCaptions() async {
-    final String fileContents = await DefaultAssetBundle.of(context)
-        .loadString('assets/bumble_bee_captions.vtt');
-    return WebVTTCaptionFile(
-        fileContents); // For vtt files, use WebVTTCaptionFile
-  }
-
-  String subtitle = "Subtitle";
-
   @override
   void initState() {
     super.initState();
@@ -78,17 +69,12 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     //http://sample.vodobox.com/planete_interdite/planete_interdite_alternate.m3u8
     // 'https://mirror.selfnet.de/CCC/congress/2019/h264-hd/36c3-11235-eng-deu-fra-36C3_Infrastructure_Review_hd.mp4'
     _controller = MdkVideoPlayerController.networkUrl(
+      // 'assets/5.ts',
       Uri.parse(
-          'https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4'),
+        'http://sample.vodobox.com/planete_interdite/planete_interdite_alternate.m3u8',
+      ),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
-
-    _controller.addListener(() {
-      // print('video listener :${_controller.value}');
-      // final cues = _controller.value.subtitle;
-      // subtitle = (cues.isEmpty ? '' : cues.join("/n"));
-      // setState(() {});
-    });
 
     _controller.setLooping(true);
     _controller.initialize();

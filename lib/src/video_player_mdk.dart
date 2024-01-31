@@ -1,10 +1,11 @@
-// Copyright 2022-2023 Wang Bin. All rights reserved.
+// Copyright 2022-2024 Wang Bin. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart'; //
 import 'package:fvp/mdk.dart';
 import 'package:logging/logging.dart';
@@ -40,6 +41,9 @@ class MdkPlayer extends mdk.Player {
           final vc = info.video![0].codec;
           size = Size(vc.width.toDouble(),
               (vc.height.toDouble() / vc.par).roundToDouble());
+          if (info.video![0].rotation % 180 == 90) {
+            size = Size(size.height, size.width);
+          }
         }
         streamCtl.add(VideoEvent(
             eventType: VideoEventType.initialized,
@@ -120,6 +124,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   int? _maxHeight;
   bool? _fitMaxSize;
   bool? _tunnel;
+  static String? _subtitleFontFile;
   int _lowLatency = 0;
   int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
   List<String>? _decoders;
@@ -134,6 +139,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
  */
   void registerVideoPlayerPlatformsWith({dynamic options}) {
     // prefer hardware decoders
+    _log.fine('registerVideoPlayerPlatformsWith: $options');
     if (options is Map<String, dynamic>) {
       final platforms = options['platforms'];
       if (platforms is List<String>) {
@@ -153,6 +159,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       _playerOpts = options['player'];
       _globalOpts = options['global'];
       _decoders = options['video.decoders'];
+      _subtitleFontFile = options['subtitleFontFile'];
     }
 
     if (_decoders == null && !PlatformEx.isAndroidEmulator()) {
@@ -165,6 +172,8 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       };
       _decoders = vd[Platform.operatingSystem];
     }
+    mdk.setGlobalOption('subtitle.fonts.file',
+        _assetUri(_subtitleFontFile ?? 'assets/subfont.ttf', null));
     _globalOpts?.forEach((key, value) {
       mdk.setGlobalOption(key, value);
     });
@@ -220,6 +229,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     _log.fine('$hashCode player${player.nativeHandle} create($uri)');
 
     //player.setProperty("keep_open", "1");
+    player.setProperty('avformat.strict', 'experimental');
     player.setProperty('avio.protocol_whitelist',
         'file,rtmp,http,https,tls,rtp,tcp,udp,crypto,httpproxy,data,concatf,concat,subfile');
     player.setProperty('avformat.rtsp_transport', 'tcp');
@@ -253,11 +263,19 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
 
     player.prepare(); // required!
 // FIXME: pending events will be processed after texture returned, but no events before prepared
+// FIXME: set tunnel too late
     final tex = await player.updateTexture(
         width: _maxWidth,
         height: _maxHeight,
         tunnel: _tunnel,
         fit: _fitMaxSize);
+    if (tex < 0) {
+      player.dispose();
+      throw PlatformException(
+        code: 'media open error',
+        message: 'invalid or unsupported media',
+      );
+    }
     _players[tex] = player;
     return tex;
   }
