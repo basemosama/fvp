@@ -71,8 +71,9 @@ class _BumbleBeeRemoteVideoState extends State<_BumbleBeeRemoteVideo> {
     _controller = MdkVideoPlayerController.networkUrl(
       // 'assets/5.ts',
       Uri.parse(
-        'http://sample.vodobox.com/planete_interdite/planete_interdite_alternate.m3u8',
-      ),
+          'https://storage.googleapis.com/exoplayer-test-media-1/mp4/dizzy-with-tx3g.mp4'
+          // 'http://sample.vodobox.com/planete_interdite/planete_interdite_alternate.m3u8',
+          ),
       videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
     );
 

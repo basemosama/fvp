@@ -4,15 +4,17 @@
 
 import 'dart:async';
 import 'dart:io';
-import 'package:flutter/widgets.dart'; //
+
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart'; //
 import 'package:fvp/mdk.dart';
+import 'package:fvp/src/fvp_platform_interface.dart';
 import 'package:logging/logging.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
-import 'extensions.dart';
 
 import '../mdk.dart' as mdk;
+import 'extensions.dart';
 
 final _log = Logger('fvp');
 
@@ -129,12 +131,13 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   bool? _fitMaxSize;
   bool? _tunnel;
   static String? _subtitleFontFile;
-  static int _lowLatency = 0;
-  static int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
-  static List<String>? _decoders;
-  static final _mdkLog = Logger('mdk');
+  int _lowLatency = 0;
+  int _seekFlags = mdk.SeekFlag.fromStart | mdk.SeekFlag.inCache;
+  List<String>? _decoders;
+  final _mdkLog = Logger('mdk');
+
   // _prevImpl: required if registerWith() can be invoked multiple times by user
-  static VideoPlayerPlatform? _prevImpl;
+  static MdkVideoPlayerPlatform? _prevImpl;
 
 /*
   Registers this class as the default instance of [VideoPlayerPlatform].
@@ -143,7 +146,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
   "video.decoders": a list of decoder names. supported decoders: https://github.com/wang-bin/mdk-sdk/wiki/Decoders
   "maxWidth", "maxHeight": texture max size. if not set, video frame size is used. a small value can reduce memory cost, but may result in lower image quality.
  */
-  static void registerVideoPlayerPlatformsWith({dynamic options}) {
+  void registerVideoPlayerPlatformsWith({dynamic options}) {
     _log.fine('registerVideoPlayerPlatformsWith: $options');
     if (options is Map<String, dynamic>) {
       final platforms = options['platforms'];
@@ -151,7 +154,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
         if (!platforms.contains(Platform.operatingSystem)) {
           if (_prevImpl != null) {
             // null if it's the 1st time to call registerWith() including current platform
-            VideoPlayerPlatform.instance = _prevImpl!;
+            MdkVideoPlayerPlatform.instance = _prevImpl!;
           }
           return;
         }
@@ -202,6 +205,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
           return;
       }
     });
+
     // mdk.setGlobalOptions('plugins', 'mdk-braw');
     mdk.setGlobalOption("log", "all");
     mdk.setGlobalOption('d3d11.sync.cpu', 1);
@@ -212,8 +216,8 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     });
 
     // if VideoPlayerPlatform.instance.runtimeType.toString() != '_PlaceholderImplementation' ?
-    _prevImpl ??= VideoPlayerPlatform.instance;
-    VideoPlayerPlatform.instance = MdkVideoPlayerPlatform();
+    _prevImpl ??= MdkVideoPlayerPlatform.instance;
+    MdkVideoPlayerPlatform.instance = MdkVideoPlayerPlatform();
   }
 
   Future<void> init() async {}
@@ -541,8 +545,6 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     return Texture(textureId: textureId);
   }
 
-  Future<void> setMixWithOthers(bool mixWithOthers) async {}
-  @override
   Future<void> setMixWithOthers(bool mixWithOthers) async {
     FvpPlatform.instance.setMixWithOthers(mixWithOthers);
   }
@@ -664,6 +666,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
     }
     player.seek(position: position.inMilliseconds, flags: flags);
   }
+
   String _toUri(DataSource dataSource) {
     switch (dataSource.sourceType) {
       case DataSourceType.asset:
@@ -676,6 +679,7 @@ class MdkVideoPlayerPlatform extends PlatformInterface {
       case DataSourceType.contentUri:
         return dataSource.uri!;
     }
+  }
 
   static String _assetUri(String asset, String? package) {
     final key = asset;

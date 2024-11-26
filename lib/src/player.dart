@@ -9,14 +9,12 @@ import 'dart:ui' as ui;
 
 import 'package:ffi/ffi.dart';
 import 'package:flutter/foundation.dart';
-import 'package:video_player_platform_interface/video_player_platform_interface.dart';
 
+import '../fvp.dart';
+import 'extensions.dart';
 import 'fvp_platform_interface.dart';
 import 'generated_bindings.dart';
-import 'global.dart';
-import 'media_info.dart';
 import 'lib.dart';
-import 'extensions.dart';
 
 class Player {
   int get nativeHandle => _player.address;
@@ -296,8 +294,6 @@ class Player {
   set activeSubtitleTracks(List<int> value) =>
       setActiveTracks(MediaType.subtitle, value);
 
-
-
   /// Active subtitle tracks set by user
   List<int> get activeSubtitleTracks => _activeST;
 
@@ -405,7 +401,6 @@ class Player {
         _player.ref.object, type.rawValue, u8p.cast());
     u8p.free();
   }
-
 
   /// Set active tracks of [type]. Other tracks of [type] will be disabled.
   /// https://github.com/wang-bin/mdk-sdk/wiki/Player-APIs#void-setactivetracksmediatype-type-const-stdsetint-tracks
